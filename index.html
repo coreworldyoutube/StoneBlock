@@ -16,7 +16,7 @@ main{max-width:1250px;margin:auto;padding:18px;display:grid;grid-template-column
 .world-wrap{overflow:auto;background:#0c1219;padding:18px;min-height:440px;display:flex;justify-content:center;align-items:center}
 #world{display:grid;gap:3px;user-select:none;touch-action:manipulation}
 .tile{width:clamp(28px,4.1vw,43px);height:clamp(28px,4.1vw,43px);padding:0;border-radius:5px;border:1px solid #ffffff12;position:relative;display:grid;place-items:center;box-shadow:inset 0 1px #ffffff12,inset 0 -3px #0002;transition:filter .12s,transform .12s}
-.tile:hover{filter:brightness(1.25);transform:scale(1.04);z-index:1}.tile.air{background:#101923;border:1px dashed #263646;box-shadow:none;cursor:default}.tile.locked{cursor:not-allowed;filter:brightness(.7)}.tile.reachable{outline:2px solid #e2ad58aa;outline-offset:-2px}.tile .symbol{font-size:15px;text-shadow:0 1px 3px #0009}.tile .amount{position:absolute;right:3px;bottom:0;font-size:9px;color:#fff;text-shadow:0 1px 2px #000}
+.tile:hover{filter:brightness(1.25);transform:scale(1.04);z-index:1}.tile.air{background:#101923;border:1px dashed #263646;box-shadow:none;cursor:default}.tile.air.placeable{cursor:crosshair;outline:2px solid #83c99b88;outline-offset:-2px}.tile.locked{cursor:not-allowed;filter:brightness(.7)}.tile.reachable{outline:2px solid #e2ad58aa;outline-offset:-2px}.tile .symbol{font-size:15px;text-shadow:0 1px 3px #0009}.tile .amount{position:absolute;right:3px;bottom:0;font-size:9px;color:#fff;text-shadow:0 1px 2px #000}
 .legend{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}
 .modebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.modebtn.active{background:#674b25;border-color:var(--accent);color:#ffe1ad}.modebtn.place.active{background:#244b38;border-color:var(--good);color:#c7f3d5}
 select,input[type=number]{background:#101923;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px;max-width:120px}
@@ -89,29 +89,34 @@ function generate(){
  mined=0;render();
 }
 function isAir(x,y){return x<0||y<0||x>=W||y>=H||world[y][x]===EMPTY;}
+function adjacentToSolid(x,y){return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>x+dx>=0&&y+dy>=0&&x+dx<W&&y+dy<H&&world[y+dy][x+dx]!==EMPTY);}
 function exposed(x,y){if(isAir(x,y))return false;return isAir(x+1,y)||isAir(x-1,y)||isAir(x,y+1)||isAir(x,y-1);}
 function render(){
  const el=$("world");el.style.gridTemplateColumns=`repeat(${W},auto)`;el.innerHTML="";
  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
   const id=world[y][x],b=document.createElement("button");b.className="tile";
-  if(id===EMPTY){b.classList.add("air");b.disabled=true;b.setAttribute("aria-label","空気");}
-  else{const t=typeById(id),ok=exposed(x,y);b.style.background=t.color;b.classList.toggle("reachable",ok);b.classList.toggle("locked",!ok);b.innerHTML=`<span class="symbol">${t.symbol}</span>`;b.title=t.name+(ok?" — 操作可能":" — 空気に接していません");b.setAttribute("aria-label",t.name);b.addEventListener("click",()=>interact(x,y));}
+  if(id===EMPTY){b.classList.add("air");const canPlace=mode==="place"&&adjacentToSolid(x,y);b.classList.toggle("placeable",canPlace);b.disabled=!canPlace;b.setAttribute("aria-label","空気（設置可能）");if(canPlace)b.addEventListener("click",()=>interact(x,y));}
+  else{const t=typeById(id),ok=exposed(x,y);b.style.background=t.color;b.classList.toggle("reachable",ok);b.classList.toggle("locked",!ok);b.innerHTML=`<span class="symbol">${t.symbol}</span>`;b.title=t.name+(ok?" — 操作可能":" — 空気に接していません");b.setAttribute("aria-label",t.name);if(mode==="mine"&&ok)b.addEventListener("click",()=>interact(x,y));}
   el.appendChild(b);
  }
  $("mined").textContent=mined;const total=Object.values(inventory).reduce((a,b)=>a+b,0);$("total").textContent=total;$("totalMobile").textContent=total;
  renderResources();
 }
 function interact(x,y){
- if(!exposed(x,y)){toast("このブロックはまだ空気に接していません");return;}
  if(mode==="mine"){
+  if(!exposed(x,y)){toast("このブロックはまだ空気に接していません");return;}
   const id=world[y][x];world[y][x]=EMPTY;inventory[id]=(inventory[id]||0)+1;mined++;render();
  }else{
+  if(!isAir(x,y)||!adjacentToSolid(x,y)){toast("ブロックに接している空気マスを選んでください");return;}
   const id=selected,t=typeById(id),n=Math.max(1,Math.min(999,Math.floor(Number($("amount").value)||1)));
   if(inventory[id]<n){toast(t.name+"が足りません（所持 "+inventory[id]+" 個）");return;}
-  world[y][x]=id;inventory[id]-=n;
-  // The quantity control determines the amount withdrawn from inventory; one grid cell stores one block.
-  if(n>1)inventory[id]+=n-1;
-  render();toast(t.name+"を1個設置しました");
+  const queue=[[x,y]],seen=new Set(),placed=[];
+  while(queue.length&&placed.length<n){const [cx,cy]=queue.shift(),key=cx+","+cy;if(seen.has(key))continue;seen.add(key);
+   if(cx<0||cy<0||cx>=W||cy>=H||!isAir(cx,cy)||!adjacentToSolid(cx,cy))continue;
+   world[cy][cx]=id;placed.push([cx,cy]);
+   queue.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
+  }
+  inventory[id]-=placed.length;render();toast(t.name+"を"+placed.length+"個設置しました");
  }
 }
 function resourceRow(t){
@@ -127,7 +132,7 @@ function renderResources(){
 }
 function setMode(next){
  mode=next;$("mineMode").classList.toggle("active",mode==="mine");$("placeMode").classList.toggle("active",mode==="place");
- $("hint").textContent=mode==="mine"?"空気に接しているブロックをクリックして採掘":"インベントリからブロックを選び、空気マスに接するブロックをクリックして設置";
+ $("hint").textContent=mode==="mine"?"空気に接しているブロックをクリックして採掘":"インベントリからブロックを選び、緑枠の空気マスをクリックして指定数を設置";render();
 }
 function toast(s){const e=$("toast");e.textContent=s;e.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove("show"),1700);}
 $("mineMode").onclick=()=>setMode("mine");$("placeMode").onclick=()=>setMode("place");
