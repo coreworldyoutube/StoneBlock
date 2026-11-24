@@ -1,6 +1,7 @@
 # StoneBlock
 
 2D平面の石の世界に閉じ込められてしまった。ブラウザで遊べる、2Dブロック採掘ゲームです。
+https://coreworldyoutube.github.io/StoneBlock/
 
 ## 起動方法
 
