@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StoneBlock — 地下採掘</title>
+<style>
+:root{color-scheme:dark;--bg:#10151c;--panel:#1a232e;--panel2:#222e3b;--line:#344454;--text:#e8eef5;--muted:#9aabba;--accent:#e2ad58;--good:#83c99b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#202d3b,#10151c 65%);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+button,input{font:inherit}button{cursor:pointer;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px}button:hover{border-color:var(--accent)}button:disabled{opacity:.4;cursor:not-allowed}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);background:#121a23dd;position:sticky;top:0;z-index:5;backdrop-filter:blur(10px)}
+.brand{font-size:19px;font-weight:800;letter-spacing:.04em}.brand span{color:var(--accent)}.subtitle{color:var(--muted);font-size:12px}
+main{max-width:1250px;margin:auto;padding:18px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
+.panel{background:#18222ddd;border:1px solid var(--line);border-radius:13px;box-shadow:0 12px 32px #0003;overflow:hidden}.panel-head{padding:12px 15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}.panel-body{padding:14px}
+.stats{display:flex;gap:8px;flex-wrap:wrap}.stat{background:#111923;border:1px solid var(--line);padding:6px 10px;border-radius:8px;color:var(--muted);font-size:12px}.stat b{color:var(--text);margin-left:5px}
+.world-wrap{overflow:auto;background:#0c1219;padding:18px;min-height:440px;display:flex;justify-content:center;align-items:center}
+#world{display:grid;gap:3px;user-select:none;touch-action:manipulation}
+.tile{width:clamp(28px,4.1vw,43px);height:clamp(28px,4.1vw,43px);padding:0;border-radius:5px;border:1px solid #ffffff12;position:relative;display:grid;place-items:center;box-shadow:inset 0 1px #ffffff12,inset 0 -3px #0002;transition:filter .12s,transform .12s}
+.tile:hover{filter:brightness(1.25);transform:scale(1.04);z-index:1}.tile.air{background:#101923;border:1px dashed #263646;box-shadow:none;cursor:default}.tile.locked{cursor:not-allowed;filter:brightness(.7)}.tile.reachable{outline:2px solid #e2ad58aa;outline-offset:-2px}.tile .symbol{font-size:15px;text-shadow:0 1px 3px #0009}.tile .amount{position:absolute;right:3px;bottom:0;font-size:9px;color:#fff;text-shadow:0 1px 2px #000}
+.legend{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}
+.modebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.modebtn.active{background:#674b25;border-color:var(--accent);color:#ffe1ad}.modebtn.place.active{background:#244b38;border-color:var(--good);color:#c7f3d5}
+select,input[type=number]{background:#101923;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px;max-width:120px}
+.side{display:flex;flex-direction:column;gap:14px}.resource-list{display:grid;gap:5px;max-height:340px;overflow:auto}.resource{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:7px;background:#111923}.swatch{width:18px;height:18px;border-radius:4px;border:1px solid #ffffff44;flex:none}.resource .name{flex:1}.resource .count{font-variant-numeric:tabular-nums;color:#f0c77f}
+.inventory-tabs{display:flex;gap:5px;flex-wrap:wrap}.tab.active{background:#654a26;border-color:var(--accent)}.inventory-view{display:none}.inventory-view.active{display:block}
+.drawer{display:none;position:fixed;inset:0;background:#0009;z-index:10;justify-content:flex-end}.drawer.open{display:flex}.drawer-card{background:var(--panel);width:min(420px,92vw);height:100%;padding:18px;overflow:auto;border-left:1px solid var(--line)}.drawer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.footer-note{color:var(--muted);font-size:12px;margin-top:10px}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#263747;border:1px solid #52677b;padding:9px 15px;border-radius:9px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}.toast.show{opacity:1}
+.mobile-resource{display:none}
+@media(max-width:850px){main{grid-template-columns:1fr;padding:10px}.side{display:none}.mobile-resource{display:flex;gap:7px;align-items:center}.world-wrap{min-height:360px;padding:10px}.tile{width:clamp(27px,8vw,39px);height:clamp(27px,8vw,39px)}header{padding:10px 12px}.subtitle{display:none}}
+</style>
+</head>
+<body>
+<header><div><div class="brand"><span>STONE</span>BLOCK</div><div class="subtitle">石の世界を掘り進めよう</div></div><div class="mobile-resource"><span class="stat">所持 <b id="totalMobile">0</b></span><button id="openInventoryMobile">インベントリ</button></div><div class="stats"><div class="stat">採掘数 <b id="mined">0</b></div><div class="stat">所持資源 <b id="total">0</b></div></div></header>
+<main>
+<section class="panel">
+ <div class="panel-head"><strong>地下フィールド</strong><div class="modebar"><button id="mineMode" class="modebtn active">⛏ 採掘 ON</button><button id="placeMode" class="modebtn place">▦ 設置 OFF</button></div></div>
+ <div class="panel-body" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+  <div class="subtitle" id="hint">空気に接しているブロックをクリックして採掘</div>
+  <div class="modebar"><label for="amount">設置数</label><input id="amount" type="number" min="1" max="999" value="1"><button id="reset">ワールド再生成</button></div>
+ </div>
+ <div class="world-wrap"><div id="world" aria-label="採掘フィールド"></div></div>
+ <div class="legend"><span>✦ 金色の枠＝空気に接していて操作可能</span><span>暗いマス＝まだ掘れない</span><span>中央の空洞から掘り進めます</span></div>
+</section>
+<aside class="side">
+ <section class="panel"><div class="panel-head"><strong>資源一覧</strong><button id="openInventory">インベントリを開く</button></div><div class="panel-body"><div class="resource-list" id="quickResources"></div><div class="footer-note">左右の矢印で資源リストを切り替えできます。</div><div class="modebar" style="margin-top:10px;justify-content:space-between"><button id="prevPage">← 前へ</button><span id="pageLabel" class="subtitle">1 / 3</span><button id="nextPage">次へ →</button></div></div></section>
+ <section class="panel"><div class="panel-head"><strong>遊び方</strong></div><div class="panel-body"><ol style="padding-left:19px;margin:0;color:var(--muted)"><li>空洞に接しているブロックをクリック。</li><li>採掘ONなら資源として回収。</li><li>設置OFFなら選択した資源を指定数だけ配置。</li><li>掘るほど新しい資源層に到達します。</li></ol></div></section>
+</aside>
+</main>
+<div class="drawer" id="drawer"><div class="drawer-card"><div class="drawer-head"><strong style="font-size:18px">インベントリ</strong><button id="closeInventory">閉じる ✕</button></div><div class="inventory-tabs" id="tabs"><button class="tab active" data-tab="all">すべて</button><button class="tab" data-tab="terrain">地層</button><button class="tab" data-tab="rock">岩石</button><button class="tab" data-tab="metal">金属</button><button class="tab" data-tab="gem">宝石</button></div><div class="panel-body" style="padding:12px 0"><div class="resource-list" id="inventoryResources"></div><div class="footer-note">設置モードでは、ここで選択したブロックをフィールドに配置できます。</div></div></div></div>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+"use strict";
+const TYPES = [
+{id:"dirt",name:"土",group:"terrain",color:"#79543a",symbol:"▪",weight:28},
+{id:"clay",name:"粘土",group:"terrain",color:"#a66f67",symbol:"▪",weight:12},
+{id:"sand",name:"砂",group:"terrain",color:"#d7bd75",symbol:"▪",weight:15},
+{id:"stone",name:"石",group:"rock",color:"#858b91",symbol:"▪",weight:35},
+{id:"granite",name:"花崗岩",group:"rock",color:"#b47c76",symbol:"▪",weight:10},
+{id:"andesite",name:"安山岩",group:"rock",color:"#777e82",symbol:"▪",weight:10},
+{id:"basalt",name:"玄武岩",group:"rock",color:"#414a54",symbol:"▪",weight:9},
+{id:"diorite",name:"閃緑岩",group:"rock",color:"#c0c4c1",symbol:"▪",weight:8},
+{id:"copper",name:"銅鉱石",group:"metal",color:"#bd754b",symbol:"◆",weight:7},
+{id:"iron",name:"鉄鉱石",group:"metal",color:"#b7a18b",symbol:"◆",weight:8},
+{id:"gold",name:"金鉱石",group:"metal",color:"#e5bd42",symbol:"◆",weight:3},
+{id:"silver",name:"銀鉱石",group:"metal",color:"#c5d1dc",symbol:"◆",weight:2},
+{id:"platinum",name:"プラチナ鉱石",group:"metal",color:"#9fc5cf",symbol:"◆",weight:1},
+{id:"diamond",name:"ダイヤモンド",group:"gem",color:"#68e3e5",symbol:"✦",weight:.45},
+{id:"ruby",name:"ルビー",group:"gem",color:"#e34d64",symbol:"✦",weight:.6},
+{id:"emerald",name:"エメラルド",group:"gem",color:"#42c783",symbol:"✦",weight:.6},
+{id:"amethyst",name:"アメジスト",group:"gem",color:"#a77ae8",symbol:"✦",weight:.7},
+{id:"sapphire",name:"サファイア",group:"gem",color:"#4f83e8",symbol:"✦",weight:.6},
+{id:"topaz",name:"トパーズ",group:"gem",color:"#e9ae49",symbol:"✦",weight:.7},
+{id:"aquamarine",name:"アクアマリン",group:"gem",color:"#69c9d8",symbol:"✦",weight:.7}
+];
+const W=19,H=19,EMPTY=null;
+let world=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all";
+const $=id=>document.getElementById(id);
+const typeById=id=>TYPES.find(t=>t.id===id);
+function weightedType(depth,x,y){
+ const weights=TYPES.map(t=>{let w=t.weight;if(t.group==="gem")w*=Math.max(.12,Math.min(2.8,depth/45));if(t.id==="dirt"||t.id==="sand"||t.id==="clay")w*=Math.max(.08,1-depth/35);if(t.id==="basalt"||t.id==="granite"||t.id==="andesite"||t.id==="diorite")w*=1+depth/90;return w;});
+ let n=Math.random()*weights.reduce((a,b)=>a+b,0);
+ for(let i=0;i<TYPES.length;i++){n-=weights[i];if(n<=0)return TYPES[i].id;}
+ return "stone";
+}
+function generate(){
+ world=Array.from({length:H},(_,y)=>Array.from({length:W},(_,x)=>weightedType(Math.max(Math.abs(x-9),Math.abs(y-9)),x,y)));
+ for(let y=7;y<=11;y++)for(let x=7;x<=11;x++)world[y][x]=EMPTY;
+ inventory={};for(const t of TYPES)inventory[t.id]=0;
+ mined=0;render();
+}
+function isAir(x,y){return x<0||y<0||x>=W||y>=H||world[y][x]===EMPTY;}
+function exposed(x,y){if(isAir(x,y))return false;return isAir(x+1,y)||isAir(x-1,y)||isAir(x,y+1)||isAir(x,y-1);}
+function render(){
+ const el=$("world");el.style.gridTemplateColumns=`repeat(${W},auto)`;el.innerHTML="";
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+  const id=world[y][x],b=document.createElement("button");b.className="tile";
+  if(id===EMPTY){b.classList.add("air");b.disabled=true;b.setAttribute("aria-label","空気");}
+  else{const t=typeById(id),ok=exposed(x,y);b.style.background=t.color;b.classList.toggle("reachable",ok);b.classList.toggle("locked",!ok);b.innerHTML=`<span class="symbol">${t.symbol}</span>`;b.title=t.name+(ok?" — 操作可能":" — 空気に接していません");b.setAttribute("aria-label",t.name);b.addEventListener("click",()=>interact(x,y));}
+  el.appendChild(b);
+ }
+ $("mined").textContent=mined;const total=Object.values(inventory).reduce((a,b)=>a+b,0);$("total").textContent=total;$("totalMobile").textContent=total;
+ renderResources();
+}
+function interact(x,y){
+ if(!exposed(x,y)){toast("このブロックはまだ空気に接していません");return;}
+ if(mode==="mine"){
+  const id=world[y][x];world[y][x]=EMPTY;inventory[id]=(inventory[id]||0)+1;mined++;render();
+ }else{
+  const id=selected,t=typeById(id),n=Math.max(1,Math.min(999,Math.floor(Number($("amount").value)||1)));
+  if(inventory[id]<n){toast(t.name+"が足りません（所持 "+inventory[id]+" 個）");return;}
+  world[y][x]=id;inventory[id]-=n;
+  // The quantity control determines the amount withdrawn from inventory; one grid cell stores one block.
+  if(n>1)inventory[id]+=n-1;
+  render();toast(t.name+"を1個設置しました");
+ }
+}
+function resourceRow(t){
+ const row=document.createElement("div");row.className="resource";row.innerHTML=`<span class="swatch" style="background:${t.color}"></span><span class="name">${t.name}</span><b class="count">${inventory[t.id]||0}</b>`;
+ row.addEventListener("click",()=>{selected=t.id;document.querySelectorAll(".resource").forEach(e=>e.style.outline="");row.style.outline="1px solid #e2ad58";$("hint").textContent="設置対象："+t.name;});return row;
+}
+function renderResources(){
+ const start=page*7,items=TYPES.slice(start,start+7);$("quickResources").innerHTML="";items.forEach(t=>$("quickResources").appendChild(resourceRow(t)));
+ $("pageLabel").textContent=(page+1)+" / "+Math.ceil(TYPES.length/7);
+ $("prevPage").disabled=page===0;$("nextPage").disabled=(page+1)*7>=TYPES.length;
+ $("inventoryResources").innerHTML="";
+ TYPES.filter(t=>invTab==="all"||t.group===invTab).forEach(t=>$("inventoryResources").appendChild(resourceRow(t)));
+}
+function setMode(next){
+ mode=next;$("mineMode").classList.toggle("active",mode==="mine");$("placeMode").classList.toggle("active",mode==="place");
+ $("hint").textContent=mode==="mine"?"空気に接しているブロックをクリックして採掘":"インベントリからブロックを選び、空気マスに接するブロックをクリックして設置";
+}
+function toast(s){const e=$("toast");e.textContent=s;e.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove("show"),1700);}
+$("mineMode").onclick=()=>setMode("mine");$("placeMode").onclick=()=>setMode("place");
+$("prevPage").onclick=()=>{page=Math.max(0,page-1);renderResources();};$("nextPage").onclick=()=>{page=Math.min(Math.ceil(TYPES.length/7)-1,page+1);renderResources();};
+$("openInventory").onclick=$("openInventoryMobile").onclick=()=>{$("drawer").classList.add("open");};
+$("closeInventory").onclick=()=> $("drawer").classList.remove("open");
+$("drawer").addEventListener("click",e=>{if(e.target===$("drawer"))$("drawer").classList.remove("open");});
+$("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;invTab=b.dataset.tab;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));renderResources();});
+$("reset").onclick=()=>{if(confirm("ワールドとインベントリを初期化しますか？"))generate();};
+generate();
+})();
+</script>
+</body>
+</html>
