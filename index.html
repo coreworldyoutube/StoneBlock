@@ -46,7 +46,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
  <div class="panel-head"><strong>地下フィールド</strong><div class="modebar"><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button></div></div>
  <div class="panel-body" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
   <div class="subtitle" id="hint">空気に接しているブロックをタップして1マス採掘</div>
-  <div class="modebar"><button id="randomWorld">シード再抽選</button></div>
+  <div class="modebar"><label for="seedInput" class="subtitle">SEED</label><input id="seedInput" type="number" step="1" inputmode="numeric" placeholder="シード値" style="width:116px;max-width:116px"><button id="randomWorld">ランダム生成</button><button id="applySeed">指定シードで生成</button></div>
  </div>
  <div class="world-wrap"><div id="world-stage"><canvas id="world" aria-label="採掘フィールド"></canvas></div></div><div id="map-panel"><div class="map-title">MAP</div><canvas id="minimap" width="150" height="150" aria-label="全体マップ"></canvas></div>
 
@@ -103,8 +103,24 @@ const SAVE_KEY="stoneblock-world-v1";
 const INVENTORY_KEY="stoneblock-inventory-v1";
 function saveInventory(){try{localStorage.setItem(INVENTORY_KEY,JSON.stringify(inventory));return true;}catch(e){toast("インベントリを保存できませんでした");return false;}}
 function loadInventory(){try{const raw=localStorage.getItem(INVENTORY_KEY);const saved=raw?JSON.parse(raw):null;inventory={};for(const t of TYPES)inventory[t.id]=Number(saved?.[t.id])||0;}catch(e){inventory={};for(const t of TYPES)inventory[t.id]=0;}}
-function saveWorld(show=true){try{const wrap=document.querySelector(".world-wrap"),changes=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(world[y][x]!==baseWorld[y][x])changes.push([i,world[y][x]]);}const data={version:3,seed:worldSeed,changes,mined,selected,mode,scrollLeft:wrap.scrollLeft,scrollTop:wrap.scrollTop};localStorage.setItem(SAVE_KEY,JSON.stringify(data));if(show)toast("ワールドを保存しました（変更箇所 "+changes.length+"）");return true;}catch(e){toast("保存できませんでした（容量・ブラウザ設定を確認）");return false;}}
-function loadWorld(show=true){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw){if(show)toast("保存データがありません");return false;}const d=JSON.parse(raw);if(![1,2,3].includes(d.version))throw new Error("invalid save");worldSeed=Number.isFinite(d.seed)?d.seed:0;baseWorld=generateBase();world=baseWorld.map(row=>row.slice());if(d.version===2){if(!Array.isArray(d.changes))throw new Error("invalid changes");for(const change of d.changes){if(!Array.isArray(change)||change.length!==2)continue;const i=change[0],id=change[1];if(!Number.isInteger(i)||i<0||i>=W*H||(id!==null&&!typeById(id)))continue;world[Math.floor(i/W)][i%W]=id;}}else{if(!Array.isArray(d.world)||d.world.length!==H||d.world.some(row=>!Array.isArray(row)||row.length!==W))throw new Error("invalid legacy save");world=d.world;}if(d.version<3&&!localStorage.getItem(INVENTORY_KEY)){inventory={};for(const t of TYPES)inventory[t.id]=Number(d.inventory?.[t.id])||0;saveInventory();}mined=Number(d.mined)||0;selected=typeById(d.selected)?d.selected:"dirt";mode=d.mode==="place"?"place":"mine";updateVisibility();setMode(mode);render();const wrap=document.querySelector(".world-wrap");wrap.scrollLeft=Number(d.scrollLeft)||0;wrap.scrollTop=Number(d.scrollTop)||0;drawWorld();drawMinimap();if(show)toast("保存したワールドを読み込みました");return true;}catch(e){if(show)toast("保存データを読み込めませんでした");return false;}}
+function saveWorld(show=true){try{const wrap=document.querySelector(".world-wrap"),changes=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(world[y][x]!==baseWorld[y][x])changes.push([i,world[y][x]]);}const data={version:4,seed:worldSeed,changes,mined,selected,mode,scrollLeft:wrap.scrollLeft,scrollTop:wrap.scrollTop};localStorage.setItem(SAVE_KEY,JSON.stringify(data));if(show)toast("ワールドを保存しました（変更箇所 "+changes.length+"）");return true;}catch(e){toast("保存できませんでした（容量・ブラウザ設定を確認）");return false;}}
+function loadWorld(show=true){try{
+ const raw=localStorage.getItem(SAVE_KEY);if(!raw){if(show)toast("保存データがありません");return false;}
+ const d=JSON.parse(raw);if(![1,2,3,4].includes(d.version))throw new Error("invalid save");
+ worldSeed=Number.isSafeInteger(d.seed)?d.seed:0;baseWorld=generateBase();world=baseWorld.map(row=>row.slice());
+ if(d.version===1){
+  if(!Array.isArray(d.world)||d.world.length!==H||d.world.some(row=>!Array.isArray(row)||row.length!==W))throw new Error("invalid legacy save");
+  world=d.world;
+ }else{
+  if(!Array.isArray(d.changes))throw new Error("invalid changes");
+  for(const change of d.changes){if(!Array.isArray(change)||change.length!==2)continue;const i=change[0],id=change[1];if(!Number.isInteger(i)||i<0||i>=W*H||(id!==null&&!typeById(id)))continue;world[Math.floor(i/W)][i%W]=id;}
+ }
+ if(d.version<4&&!localStorage.getItem(INVENTORY_KEY)){inventory={};for(const t of TYPES)inventory[t.id]=Number(d.inventory?.[t.id])||0;saveInventory();}
+ mined=Number(d.mined)||0;selected=typeById(d.selected)?d.selected:"dirt";mode=d.mode==="place"?"place":"mine";
+ updateVisibility();setMode(mode);render();$("seedInput").value=String(worldSeed);
+ const wrap=document.querySelector(".world-wrap");wrap.scrollLeft=Number(d.scrollLeft)||0;wrap.scrollTop=Number(d.scrollTop)||0;
+ drawWorld();drawMinimap();if(show)toast("保存したワールドを読み込みました");return true;
+ }catch(e){if(show)toast("保存データを読み込めませんでした");return false;}}
 function hash2(ix,iy){
  let h=(Math.imul(ix,374761393)+Math.imul(iy,668265263)+worldSeed)|0;
  h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967295;
@@ -125,38 +141,37 @@ function fbm(x,y,octaves=4){
  return sum/norm;
 }
 function weightedType(depth,x,y){
- // Deep underground is overwhelmingly stone. Other rock types form broad geological regions.
  const broad=fbm(x*.018,y*.018,3),medium=fbm(x*.055+41,y*.055-17,3);
- const detail=fbm(x*.13-9,y*.13+23,2);
- const vertical=y/H;
- // Soil is concentrated near the upper strata, not scattered evenly through the stone.
+ const detail=fbm(x*.13-9,y*.13+23,2),vertical=y/H;
  if(y<18+Math.floor((fbm(x*.035,7)*.5+.5)*8)){
-  if(medium>.38&&detail>.05)return "clay";
-  if(medium<-.42&&detail<-.05)return "sand";
+  if(medium>.30&&detail>.00)return "clay";
+  if(medium<-.34&&detail<-.00)return "sand";
   return "dirt";
  }
- // Most of the underground remains ordinary stone.
+ // Carve connected cave systems before placing mineral deposits.
+ const caveWarpX=fbm(x*.022+137,y*.022-51,3),caveWarpY=fbm(x*.022-73,y*.022+119,3);
+ const cave=fbm((x+caveWarpX*8)*.042,(y+caveWarpY*8)*.042,3);
+ if(y>28&&cave>.64&&detail<.58)return EMPTY;
+ // Separate low-frequency fields make deposits form connected, irregular veins.
+ const copperVein=fbm(x*.072+83,y*.072-29,3);
+ const ironVein=fbm(x*.078-151,y*.078+67,3);
+ const preciousVein=fbm(x*.105+211,y*.105-173,3);
+ const gemVein=fbm(x*.145-307,y*.145+229,3);
+ const local=fbm(x*.19+17,y*.19-91,2);
+ if(y>34&&copperVein>.43&&local>-.24)return "copper";
+ if(y>42&&ironVein<-.43&&local<.25)return "iron";
+ if(vertical>.25&&preciousVein>.57&&local>-.08)return "gold";
+ if(vertical>.30&&preciousVein<-.61&&local<.12)return "silver";
+ if(vertical>.52&&broad<-.35&&preciousVein>.35&&local>.08)return "platinum";
+ if(vertical>.38&&gemVein>.64&&local>.12){
+  const gems=["diamond","ruby","emerald","amethyst","sapphire","topaz","aquamarine"];
+  return gems[Math.floor(hash2(x+991,y-337)*gems.length)];
+ }
+ // Rock strata are broad regions; stone remains the dominant host rock.
  if(broad>.48&&medium>.05)return "granite";
  if(broad<-.48&&medium<-.02)return "basalt";
  if(medium>.48)return "diorite";
  if(medium<-.48)return "andesite";
- // Ore veins use a narrow noise band, making deposits appear in connected pockets.
- const vein=fbm(x*.105+83,y*.105-29,3);
- const depthFactor=Math.max(0,Math.min(1,(vertical-.08)/.92));
- if(depthFactor>.12&&vein>.66&&detail>.02)return "diamond";
- if(depthFactor>.08&&vein<-.69&&detail<-.04)return "gold";
- if(medium>.58&&vein>.28)return "copper";
- if(medium<-.58&&vein<-.25)return "iron";
- if(depthFactor>.35&&broad>.55&&vein<-.48)return "silver";
- if(depthFactor>.55&&broad<-.58&&vein>.48)return "platinum";
- // Gems are deliberately rare and appear only in deep, compact seams.
- if(depthFactor>.48&&Math.abs(vein)>.82&&detail>.25){
-  const gems=["ruby","emerald","amethyst","sapphire","topaz","aquamarine"];
-  return gems[Math.floor(hash2(x+991,y-337)*gems.length)];
- }
- const caveWarpX=fbm(x*.022+137,y*.022-51,3),caveWarpY=fbm(x*.022-73,y*.022+119,3);
- const cave=fbm((x+caveWarpX*8)*.042,(y+caveWarpY*8)*.042,3);
- if(y>30&&cave>.57&&detail<.48)return EMPTY;
  return "stone";
 }
 function generateBase(){
@@ -169,6 +184,7 @@ function generate(seed=null){
  worldSeed=seed===null?Math.floor(Math.random()*2147483647):seed;
  baseWorld=generateBase();world=baseWorld.map(row=>row.slice());
  mined=0;updateVisibility();render();
+ $("seedInput").value=String(worldSeed);
 }
 function isAir(x,y){return x<0||y<0||x>=W||y>=H||world[y][x]===EMPTY;}
 function adjacentToSolid(x,y){return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>x+dx>=0&&y+dy>=0&&x+dx<W&&y+dy<H&&world[y+dy][x+dx]!==EMPTY);}
@@ -222,7 +238,7 @@ function interact(x,y){
 }
 function resourceRow(t){
  const row=document.createElement("div");row.className="resource";row.innerHTML=`<span class="swatch" style="background:${t.color}"></span><span class="name">${t.name}</span><b class="count">${inventory[t.id]||0}</b>`;
- row.addEventListener("click",()=>{selected=t.id;document.querySelectorAll(".resource").forEach(e=>e.style.outline="");row.style.outline="1px solid #e2ad58";$("hint").textContent="設置対象："+t.name;});return row;
+ row.addEventListener("click",()=>{selected=t.id;document.querySelectorAll(".resource").forEach(e=>e.style.outline="");row.style.outline="1px solid #a6b5b2";$("hint").textContent="設置対象："+t.name;saveWorld(false);});return row;
 }
 function renderResources(){
  const start=page*7,items=TYPES.slice(start,start+7);$("quickResources").innerHTML="";items.forEach(t=>$("quickResources").appendChild(resourceRow(t)));
@@ -236,13 +252,14 @@ function setMode(next){
  $("hint").textContent=mode==="mine"?"空気に接しているブロックをタップして採掘":"採掘OFF：インベントリからブロックを選び、空気マスをタップして1マス設置";render();
 }
 function toast(s){const e=$("toast");e.textContent=s;e.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove("show"),1700);}
-$("mineToggle").onclick=()=>setMode(mode==="mine"?"place":"mine");
+$("mineToggle").onclick=()=>{setMode(mode==="mine"?"place":"mine");saveWorld(false);};
 $("prevPage").onclick=()=>{page=Math.max(0,page-1);renderResources();};$("nextPage").onclick=()=>{page=Math.min(Math.ceil(TYPES.length/7)-1,page+1);renderResources();};
 $("openInventory").onclick=$("openInventoryMobile").onclick=()=>{$("drawer").classList.add("open");};
 $("closeInventory").onclick=()=> $("drawer").classList.remove("open");
 $("drawer").addEventListener("click",e=>{if(e.target===$("drawer"))$("drawer").classList.remove("open");});
 $("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;invTab=b.dataset.tab;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));renderResources();});
-$("randomWorld").onclick=()=>{if(confirm("新しいランダムシードで地形を再生成しますか？インベントリは保持されます。")){generate();saveWorld(false);saveInventory();toast("新しいワールド：seed "+worldSeed);}};
+$("randomWorld").onclick=()=>{if(confirm("ランダムなシード値で新しい地形を生成しますか？インベントリは保持されます。")){generate();saveWorld(false);saveInventory();toast("新しいワールド：seed "+worldSeed);}};
+$("applySeed").onclick=()=>{const raw=$("seedInput").value.trim(),seed=Number(raw);if(raw===""||!Number.isSafeInteger(seed)){toast("シード値は整数で入力してください");return;}if(confirm("シード "+seed+" で新しい地形を生成しますか？インベントリは保持されます。")){generate(seed);saveWorld(false);saveInventory();toast("指定シードで生成しました："+worldSeed);}};
 loadInventory();
  const hasSavedWorld=loadWorld(false);if(!hasSavedWorld){generate();saveWorld(false);}
  const wrap=document.querySelector(".world-wrap");
