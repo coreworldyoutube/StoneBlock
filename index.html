@@ -43,10 +43,10 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
 <header><div><div class="brand"><span>STONE</span>BLOCK</div><div class="subtitle">石の世界を掘り進めよう</div></div><div class="mobile-resource"><span class="stat">所持 <b id="totalMobile">0</b></span><button id="openInventoryMobile">インベントリ</button></div><div class="stats"><div class="stat">採掘数 <b id="mined">0</b></div><div class="stat">所持資源 <b id="total">0</b></div></div></header>
 <main>
 <section class="panel">
- <div class="panel-head"><strong>地下フィールド</strong><div class="modebar"><button id="saveWorld">保存</button><button id="loadWorld">読込</button><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button></div></div>
+ <div class="panel-head"><strong>地下フィールド</strong><div class="modebar"><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button></div></div>
  <div class="panel-body" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
   <div class="subtitle" id="hint">空気に接しているブロックをタップして1マス採掘</div>
-  <div class="modebar"><button id="seedWorld">シード指定</button><button id="reset">ワールド再生成</button></div>
+  <div class="modebar"><button id="randomWorld">シード再抽選</button></div>
  </div>
  <div class="world-wrap"><div id="world-stage"><canvas id="world" aria-label="採掘フィールド"></canvas></div></div><div id="map-panel"><div class="map-title">MAP</div><canvas id="minimap" width="150" height="150" aria-label="全体マップ"></canvas></div>
 
@@ -242,9 +242,7 @@ $("openInventory").onclick=$("openInventoryMobile").onclick=()=>{$("drawer").cla
 $("closeInventory").onclick=()=> $("drawer").classList.remove("open");
 $("drawer").addEventListener("click",e=>{if(e.target===$("drawer"))$("drawer").classList.remove("open");});
 $("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;invTab=b.dataset.tab;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));renderResources();});
-$("reset").onclick=()=>{if(confirm("新しいシードでワールドとインベントリを初期化しますか？")){generate();saveWorld(false);toast("新しいワールドを生成しました：seed "+worldSeed);}};
- $("seedWorld").onclick=()=>{const raw=prompt("ワールドのシード値を入力してください（同じ値なら同じ地形になります）",String(worldSeed));if(raw===null)return;let seed=Number(raw);if(!Number.isSafeInteger(seed)){seed=0;for(const ch of raw)seed=(Math.imul(seed,31)+ch.charCodeAt(0))|0;seed=Math.abs(seed);}generate(seed);saveWorld(false);toast("シード "+worldSeed+" のワールドを生成しました");};
-$("saveWorld").onclick=()=>saveWorld(true);$("loadWorld").onclick=()=>loadWorld(true);
+$("randomWorld").onclick=()=>{if(confirm("新しいランダムシードで地形を再生成しますか？インベントリは保持されます。")){generate();saveWorld(false);saveInventory();toast("新しいワールド：seed "+worldSeed);}};
 loadInventory();
  const hasSavedWorld=loadWorld(false);if(!hasSavedWorld){generate();saveWorld(false);}
  const wrap=document.querySelector(".world-wrap");
