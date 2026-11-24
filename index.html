@@ -84,7 +84,8 @@ const TYPES = [
 {id:"aquamarine",name:"アクアマリン",group:"gem",color:"#69c9d8",symbol:"✦",weight:.7}
 ];
 const W=300,H=300,EMPTY=null;
-let world=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",revealed=[];\nconst REVEAL_RADIUS=5;\nfunction revealAround(cx,cy){for(let y=Math.max(0,cy-REVEAL_RADIUS);y<=Math.min(H-1,cy+REVEAL_RADIUS);y++)for(let x=Math.max(0,cx-REVEAL_RADIUS);x<=Math.min(W-1,cx+REVEAL_RADIUS);x++)revealed[y][x]=true;}
+let world=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",revealed=[];
+const REVEAL_RADIUS=5;\nfunction revealAround(cx,cy){for(let y=Math.max(0,cy-REVEAL_RADIUS);y<=Math.min(H-1,cy+REVEAL_RADIUS);y++)for(let x=Math.max(0,cx-REVEAL_RADIUS);x<=Math.min(W-1,cx+REVEAL_RADIUS);x++)revealed[y][x]=true;}
 const $=id=>document.getElementById(id);
 const typeById=id=>TYPES.find(t=>t.id===id);
 // Seeded 2D gradient Perlin noise and fractal Brownian motion.
