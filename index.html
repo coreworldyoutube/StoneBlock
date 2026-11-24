@@ -21,7 +21,7 @@ main>section>.panel-body .subtitle{display:none}
 #world-stage{position:relative;width:10800px;height:10800px}
 #world{position:sticky;top:0;left:0;display:block;width:100vw;height:100dvh;max-width:none;max-height:none;touch-action:pan-x pan-y;user-select:none;cursor:crosshair}
 
-.legend{display:none}.modebar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.modebtn.active{background:#394344;border-color:var(--accent);color:#e0e8e5}.modebtn.place.active{background:#294235;border-color:var(--good);color:#c9e6ce}
+#map-panel{position:absolute;right:12px;bottom:12px;z-index:4;background:#101719d9;border:1px solid #3a4546;padding:5px;border-radius:3px}.map-title{font-size:10px;color:#aab5b1;letter-spacing:.12em;margin:0 0 4px 2px}#minimap{display:block;width:150px;height:150px;image-rendering:pixelated;cursor:pointer}@media(max-width:850px){#map-panel{right:7px;top:54px;bottom:auto;padding:3px}#minimap{width:104px;height:104px}}.legend{display:none}.modebar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.modebtn.active{background:#394344;border-color:var(--accent);color:#e0e8e5}.modebtn.place.active{background:#294235;border-color:var(--good);color:#c9e6ce}
 select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid #3a4546;border-radius:3px;padding:6px;max-width:76px}
 .side{position:absolute;right:12px;top:12px;width:220px;display:flex;flex-direction:column;gap:8px;z-index:4}.resource-list{display:grid;gap:2px;max-height:260px;overflow:auto}.resource{display:flex;align-items:center;gap:8px;padding:5px 6px;background:#202729;border-radius:2px;font-size:12px}.swatch{width:13px;height:13px;border-radius:1px;border:0;flex:none}.resource .name{flex:1}.resource .count{font-variant-numeric:tabular-nums;color:#c4ceca}
 .inventory-tabs{display:flex;gap:4px;flex-wrap:wrap}.tab.active{background:#394344;border-color:var(--accent)}.inventory-view{display:none}.inventory-view.active{display:block}
@@ -48,7 +48,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
   <div class="subtitle" id="hint">空気に接しているブロックをタップして1マス採掘</div>
   <div class="modebar"><button id="reset">ワールド再生成</button></div>
  </div>
- <div class="world-wrap"><div id="world-stage"><canvas id="world" aria-label="採掘フィールド"></canvas></div></div>
+ <div class="world-wrap"><div id="world-stage"><canvas id="world" aria-label="採掘フィールド"></canvas></div></div><div id="map-panel"><div class="map-title">MAP</div><canvas id="minimap" width="150" height="150" aria-label="全体マップ"></canvas></div>
 
 </section>
 <aside class="side">
@@ -84,8 +84,17 @@ const TYPES = [
 {id:"aquamarine",name:"アクアマリン",group:"gem",color:"#69c9d8",symbol:"✦",weight:.7}
 ];
 const W=300,H=300,EMPTY=null;
-let world=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",revealed=[];
-const REVEAL_RADIUS=5;\nfunction revealAround(cx,cy){for(let y=Math.max(0,cy-REVEAL_RADIUS);y<=Math.min(H-1,cy+REVEAL_RADIUS);y++)for(let x=Math.max(0,cx-REVEAL_RADIUS);x<=Math.min(W-1,cx+REVEAL_RADIUS);x++)revealed[y][x]=true;}
+let world=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",visibility=[];
+const REVEAL_RADIUS=5;
+function updateVisibility(){
+ visibility=Array.from({length:H},()=>Array(W).fill(99));
+ const queue=new Int32Array(W*H),dist=new Int8Array(W*H);dist.fill(99);let head=0,tail=0;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(world[y][x]===EMPTY){const i=y*W+x;dist[i]=0;queue[tail++]=i;}
+ while(head<tail){const i=queue[head++],x=i%W,y=(i/W)|0,d=dist[i];if(d>=REVEAL_RADIUS)continue;
+  for(const [nx,ny] of [[x+1,y],[x-1,y],[x,y+1],[x,y-1]])if(nx>=0&&ny>=0&&nx<W&&ny<H){const ni=ny*W+nx;if(dist[ni]>d+1){dist[ni]=d+1;queue[tail++]=ni;}}
+ }
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++)visibility[y][x]=dist[y*W+x];
+}
 const $=id=>document.getElementById(id);
 const typeById=id=>TYPES.find(t=>t.id===id);
 // Seeded 2D gradient Perlin noise and fractal Brownian motion.
@@ -147,7 +156,7 @@ function generate(){
  world=Array.from({length:H},(_,y)=>Array.from({length:W},(_,x)=>weightedType(Math.max(Math.abs(x-cx),Math.abs(y-cy)),x,y)));
  for(let y=cy-2;y<=cy+2;y++)for(let x=cx-2;x<=cx+2;x++)world[y][x]=EMPTY;
  inventory={};for(const t of TYPES)inventory[t.id]=0;
- mined=0;render();
+ mined=0;updateVisibility();render();
 }
 function isAir(x,y){return x<0||y<0||x>=W||y>=H||world[y][x]===EMPTY;}
 function adjacentToSolid(x,y){return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>x+dx>=0&&y+dy>=0&&x+dx<W&&y+dy<H&&world[y+dy][x+dx]!==EMPTY);}
@@ -161,9 +170,9 @@ function drawWorld(){
  const x0=Math.max(0,Math.floor(sx/cell)),y0=Math.max(0,Math.floor(sy/cell));
  const x1=Math.min(W,Math.ceil((sx+vw)/cell)),y1=Math.min(H,Math.ceil((sy+vh)/cell));
  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
-  const id=world[y][x],px=x*cell-sx,py=y*cell-sy;
-  if(id===EMPTY)continue;
-  const t=typeById(id);ctx.fillStyle=t.color;ctx.fillRect(px,py,cell,cell);
+  const id=world[y][x],px=x*cell-sx,py=y*cell-sy,distance=visibility[y]?.[x]??99;
+  if(distance>REVEAL_RADIUS||id===EMPTY)continue;
+  const t=typeById(id),darkness=Math.max(0,Math.min(.96,(distance-1)/5));ctx.globalAlpha=1-darkness;ctx.fillStyle=t.color;ctx.fillRect(px,py,cell,cell);
   // Fine, irregular mineral/soil grain: subtle pixel clusters, no tile outlines.
   let seed=((x*374761393)^(y*668265263)^(id.length*2246822519))>>>0;
   const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
@@ -176,10 +185,12 @@ function drawWorld(){
    for(let k=0;k<5;k++){const ox=4+rand()*28,oy=4+rand()*28;ctx.fillStyle=t.color;ctx.globalAlpha=.65+rand()*.3;ctx.fillRect(px+ox,py+oy,2+rand()*4,2+rand()*4);}
    ctx.globalAlpha=1;
   }
+  ctx.globalAlpha=1;
  }
 }
+function drawMinimap(){const c=$("minimap"),ctx=c.getContext("2d"),sx=c.width/W,sy=c.height/H;ctx.fillStyle="#090d0e";ctx.fillRect(0,0,c.width,c.height);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=visibility[y]?.[x]??99;if(d>REVEAL_RADIUS||world[y][x]===EMPTY)continue;ctx.globalAlpha=1-Math.max(0,(d-1)/5);ctx.fillStyle=typeById(world[y][x]).color;ctx.fillRect(x*sx,y*sy,Math.ceil(sx),Math.ceil(sy));}ctx.globalAlpha=1;const wrap=document.querySelector(".world-wrap"),cell=36;ctx.strokeStyle="#f0f3f2";ctx.lineWidth=1;ctx.strokeRect(wrap.scrollLeft/(W*cell)*c.width,wrap.scrollTop/(H*cell)*c.height,wrap.clientWidth/(W*cell)*c.width,wrap.clientHeight/(H*cell)*c.height);}
 function render(){
- drawWorld();
+ drawWorld();drawMinimap();
  $("mined").textContent=mined;const total=Object.values(inventory).reduce((a,b)=>a+b,0);$("total").textContent=total;$("totalMobile").textContent=total;
  renderResources();
 }
@@ -188,13 +199,13 @@ function interact(x,y){
   if(!exposed(x,y)){toast("このブロックはまだ空気に接していません");return;}
   const id=world[y][x];
   if(id===EMPTY)return;
-  world[y][x]=EMPTY;inventory[id]=(inventory[id]||0)+1;mined++;revealAround(x,y);
+  world[y][x]=EMPTY;inventory[id]=(inventory[id]||0)+1;mined++;updateVisibility();
   render();toast("1マス採掘しました");
  }else{
   if(!isAir(x,y)||!adjacentToSolid(x,y)){toast("ブロックに接している空気マスを選んでください");return;}
   const id=selected,t=typeById(id);
   if(inventory[id]<1){toast(t.name+"が足りません（所持 0 個）");return;}
-  world[y][x]=id;inventory[id]--;revealAround(x,y);render();toast(t.name+"を1マス設置しました");
+  world[y][x]=id;inventory[id]--;updateVisibility();render();toast(t.name+"を1マス設置しました");
  }
 }
 function resourceRow(t){
@@ -223,7 +234,8 @@ $("reset").onclick=()=>{if(confirm("ワールドとインベントリを初期�
 generate();
  const wrap=document.querySelector(".world-wrap");
  wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;
- wrap.addEventListener("scroll",drawWorld,{passive:true});
+ wrap.addEventListener("scroll",()=>{drawWorld();drawMinimap();},{passive:true});
+ $("minimap").addEventListener("click",e=>{const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W*36,y=(e.clientY-r.top)/r.height*H*36;wrap.scrollLeft=Math.max(0,x-wrap.clientWidth/2);wrap.scrollTop=Math.max(0,y-wrap.clientHeight/2);drawWorld();drawMinimap();});
  $("world").addEventListener("click",e=>{
   if(e.target!==$("world"))return;
   const rect=wrap.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left+wrap.scrollLeft)/36),y=Math.floor((e.clientY-rect.top+wrap.scrollTop)/36);
