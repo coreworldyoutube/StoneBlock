@@ -238,9 +238,9 @@ $("drawer").addEventListener("click",e=>{if(e.target===$("drawer"))$("drawer").c
 $("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;invTab=b.dataset.tab;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));renderResources();});
 $("reset").onclick=()=>{if(confirm("ワールドとインベントリを初期化しますか？")){generate();saveWorld(false);}};
 $("saveWorld").onclick=()=>saveWorld(true);$("loadWorld").onclick=()=>loadWorld(true);
-if(!loadWorld(false)){generate();saveWorld(false);}
+const hasSavedWorld=loadWorld(false);if(!hasSavedWorld){generate();saveWorld(false);}
  const wrap=document.querySelector(".world-wrap");
- wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;
+ if(!hasSavedWorld){wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;}
  let saveScrollTimer;wrap.addEventListener("scroll",()=>{drawWorld();drawMinimap();clearTimeout(saveScrollTimer);saveScrollTimer=setTimeout(()=>saveWorld(false),500);},{passive:true});
  $("minimap").addEventListener("click",e=>{const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W*36,y=(e.clientY-r.top)/r.height*H*36;wrap.scrollLeft=Math.max(0,x-wrap.clientWidth/2);wrap.scrollTop=Math.max(0,y-wrap.clientHeight/2);drawWorld();drawMinimap();});
  $("world").addEventListener("click",e=>{
@@ -248,7 +248,7 @@ if(!loadWorld(false)){generate();saveWorld(false);}
   const rect=wrap.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left+wrap.scrollLeft)/36),y=Math.floor((e.clientY-rect.top+wrap.scrollTop)/36);
   if(x>=0&&y>=0&&x<W&&y<H){if(mode==="mine"){if(exposed(x,y))interact(x,y);}else if(isAir(x,y)&&adjacentToSolid(x,y))interact(x,y);}
  });
- window.addEventListener("resize",drawWorld);drawWorld();
+ window.addEventListener("resize",drawWorld);window.addEventListener("pagehide",()=>saveWorld(false));drawWorld();
 })();
 </script>
 </body>
