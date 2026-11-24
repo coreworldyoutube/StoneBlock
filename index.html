@@ -43,7 +43,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
 <header><div><div class="brand"><span>STONE</span>BLOCK</div><div class="subtitle">石の世界を掘り進めよう</div></div><div class="mobile-resource"><span class="stat">所持 <b id="totalMobile">0</b></span><button id="openInventoryMobile">インベントリ</button></div><div class="stats"><div class="stat">採掘数 <b id="mined">0</b></div><div class="stat">所持資源 <b id="total">0</b></div></div></header>
 <main>
 <section class="panel">
- <div class="panel-head"><strong>地下フィールド</strong><div class="modebar"><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button></div></div>
+ <div class="panel-head"><strong>地下フィールド</strong><div class="modebar"><button id="saveWorld">保存</button><button id="loadWorld">読込</button><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button></div></div>
  <div class="panel-body" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
   <div class="subtitle" id="hint">空気に接しているブロックをタップして1マス採掘</div>
   <div class="modebar"><button id="reset">ワールド再生成</button></div>
@@ -98,7 +98,7 @@ function updateVisibility(){
 const $=id=>document.getElementById(id);
 const typeById=id=>TYPES.find(t=>t.id===id);
 // Seeded 2D gradient Perlin noise and fractal Brownian motion.
-let worldSeed=0;
+let worldSeed=0;\nconst SAVE_KEY="stoneblock-world-v1";\nfunction saveWorld(show=true){try{const wrap=document.querySelector(".world-wrap");const data={version:1,seed:worldSeed,world,inventory,mined,selected,mode,scrollLeft:wrap.scrollLeft,scrollTop:wrap.scrollTop};localStorage.setItem(SAVE_KEY,JSON.stringify(data));if(show)toast("この端末にワールドを保存しました");return true;}catch(e){toast("保存できませんでした（容量・ブラウザ設定を確認）");return false;}}\nfunction loadWorld(show=true){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw){if(show)toast("保存データがありません");return false;}const d=JSON.parse(raw);if(d.version!==1||!Array.isArray(d.world)||d.world.length!==H||d.world.some(row=>!Array.isArray(row)||row.length!==W))throw new Error("invalid save");worldSeed=d.seed||0;world=d.world;inventory={};for(const t of TYPES)inventory[t.id]=Number(d.inventory?.[t.id])||0;mined=Number(d.mined)||0;selected=typeById(d.selected)?d.selected:"dirt";mode=d.mode==="place"?"place":"mine";updateVisibility();setMode(mode);render();const wrap=document.querySelector(".world-wrap");wrap.scrollLeft=Number(d.scrollLeft)||0;wrap.scrollTop=Number(d.scrollTop)||0;drawWorld();drawMinimap();if(show)toast("保存したワールドを読み込みました");return true;}catch(e){if(show)toast("保存データを読み込めませんでした");return false;}}
 function hash2(ix,iy){
  let h=(Math.imul(ix,374761393)+Math.imul(iy,668265263)+worldSeed)|0;
  h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967295;
@@ -205,7 +205,7 @@ function interact(x,y){
   if(!isAir(x,y)||!adjacentToSolid(x,y)){toast("ブロックに接している空気マスを選んでください");return;}
   const id=selected,t=typeById(id);
   if(inventory[id]<1){toast(t.name+"が足りません（所持 0 個）");return;}
-  world[y][x]=id;inventory[id]--;updateVisibility();render();toast(t.name+"を1マス設置しました");
+  world[y][x]=id;inventory[id]--;updateVisibility();render();saveWorld(false);toast(t.name+"を1マス設置しました");
  }
 }
 function resourceRow(t){
@@ -234,7 +234,7 @@ $("reset").onclick=()=>{if(confirm("ワールドとインベントリを初期�
 generate();
  const wrap=document.querySelector(".world-wrap");
  wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;
- wrap.addEventListener("scroll",()=>{drawWorld();drawMinimap();},{passive:true});
+ let saveScrollTimer;wrap.addEventListener("scroll",()=>{drawWorld();drawMinimap();clearTimeout(saveScrollTimer);saveScrollTimer=setTimeout(()=>saveWorld(false),500);},{passive:true});
  $("minimap").addEventListener("click",e=>{const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W*36,y=(e.clientY-r.top)/r.height*H*36;wrap.scrollLeft=Math.max(0,x-wrap.clientWidth/2);wrap.scrollTop=Math.max(0,y-wrap.clientHeight/2);drawWorld();drawMinimap();});
  $("world").addEventListener("click",e=>{
   if(e.target!==$("world"))return;
