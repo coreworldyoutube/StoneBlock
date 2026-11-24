@@ -32,7 +32,7 @@ select,input[type=number]{background:#101923;color:var(--text);border:1px solid 
 <header><div><div class="brand"><span>STONE</span>BLOCK</div><div class="subtitle">石の世界を掘り進めよう</div></div><div class="mobile-resource"><span class="stat">所持 <b id="totalMobile">0</b></span><button id="openInventoryMobile">インベントリ</button></div><div class="stats"><div class="stat">採掘数 <b id="mined">0</b></div><div class="stat">所持資源 <b id="total">0</b></div></div></header>
 <main>
 <section class="panel">
- <div class="panel-head"><strong>地下フィールド</strong><div class="modebar"><button id="mineMode" class="modebtn active">⛏ 採掘 ON</button><button id="placeMode" class="modebtn place">▦ 設置 OFF</button></div></div>
+ <div class="panel-head"><strong>地下フィールド</strong><div class="modebar"><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button></div></div>
  <div class="panel-body" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
   <div class="subtitle" id="hint">空気に接しているブロックをクリックして採掘</div>
   <div class="modebar"><label for="amount">設置数</label><input id="amount" type="number" min="1" max="999" value="1"><button id="reset">ワールド再生成</button></div>
@@ -131,11 +131,11 @@ function renderResources(){
  TYPES.filter(t=>invTab==="all"||t.group===invTab).forEach(t=>$("inventoryResources").appendChild(resourceRow(t)));
 }
 function setMode(next){
- mode=next;$("mineMode").classList.toggle("active",mode==="mine");$("placeMode").classList.toggle("active",mode==="place");
- $("hint").textContent=mode==="mine"?"空気に接しているブロックをクリックして採掘":"インベントリからブロックを選び、緑枠の空気マスをクリックして指定数を設置";render();
+ mode=next;const toggle=$("mineToggle");toggle.textContent=mode==="mine"?"⛏ 採掘 ON":"▦ 採掘 OFF（設置）";toggle.classList.toggle("active",mode==="mine");toggle.classList.toggle("place",mode==="place");
+ $("hint").textContent=mode==="mine"?"空気に接しているブロックをクリックして採掘":"採掘OFF：インベントリからブロックを選び、緑枠の空気マスをクリックして指定数を設置";render();
 }
 function toast(s){const e=$("toast");e.textContent=s;e.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove("show"),1700);}
-$("mineMode").onclick=()=>setMode("mine");$("placeMode").onclick=()=>setMode("place");
+$("mineToggle").onclick=()=>setMode(mode==="mine"?"place":"mine");
 $("prevPage").onclick=()=>{page=Math.max(0,page-1);renderResources();};$("nextPage").onclick=()=>{page=Math.min(Math.ceil(TYPES.length/7)-1,page+1);renderResources();};
 $("openInventory").onclick=$("openInventoryMobile").onclick=()=>{$("drawer").classList.add("open");};
 $("closeInventory").onclick=()=> $("drawer").classList.remove("open");
