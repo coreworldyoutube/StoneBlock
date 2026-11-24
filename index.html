@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>StoneBlock — 地下採掘</title>
 <style>
-:root{color-scheme:dark;--bg:#101315;--panel:#1a2022;--panel2:#252d2f;--line:#343d3f;--text:#e4e9e7;--muted:#929e99;--accent:#d5b36b;--good:#8fba9a}
+:root{color-scheme:dark;--bg:#101315;--panel:#1a2022;--panel2:#252d2f;--line:#343d3f;--text:#e4e9e7;--muted:#929e99;--accent:#a6b5b2;--good:#8fba9a}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
 button,input{font:inherit}button{cursor:pointer;color:inherit;background:#252d2f;border:1px solid #3a4546;border-radius:4px;padding:7px 10px}button:hover{background:#303a3b;border-color:#687675}button:disabled{opacity:.35;cursor:not-allowed}
 header{height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid #30393a;background:#171d1f;position:relative;z-index:5}
@@ -20,11 +20,11 @@ main>section>.panel-body .subtitle{display:none}
 .world-wrap{height:100%;width:100%;overflow:hidden;background:#101516;padding:0;display:flex;justify-content:center;align-items:center}
 #world{display:grid;gap:1px;user-select:none;touch-action:manipulation;width:min(calc(100vw - 280px),calc(100dvh - 86px));height:min(calc(100vw - 280px),calc(100dvh - 86px));grid-template-columns:repeat(19,minmax(0,1fr));grid-template-rows:repeat(19,minmax(0,1fr));background:#0d1112}
 .tile{width:100%;height:100%;min-width:0;min-height:0;padding:0;border:0;border-radius:0;position:relative;display:block;box-shadow:none;transition:filter .1s}
-.tile:hover{filter:brightness(1.14);transform:none;z-index:1}.tile.air{background:#11191a;border:0;box-shadow:none;cursor:default}.tile.air.placeable{cursor:crosshair;outline:1px solid #9bc9a5;outline-offset:-1px}.tile.locked{cursor:not-allowed;filter:brightness(.72)}.tile.reachable{outline:1px solid #d5b36b;outline-offset:-1px}
-.legend{display:none}.modebar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.modebtn.active{background:#51452e;border-color:var(--accent);color:#f1d9a6}.modebtn.place.active{background:#294235;border-color:var(--good);color:#c9e6ce}
+.tile:hover{filter:brightness(1.14);transform:none;z-index:1}.tile.air{background:#11191a;border:0;box-shadow:none;cursor:default}.tile.air.placeable{cursor:crosshair;outline:1px solid #9bc9a5;outline-offset:-1px}.tile.locked{cursor:not-allowed;filter:brightness(.72)}.tile.reachable{outline:1px solid #a6b5b2;outline-offset:-1px}
+.legend{display:none}.modebar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.modebtn.active{background:#394344;border-color:var(--accent);color:#e0e8e5}.modebtn.place.active{background:#294235;border-color:var(--good);color:#c9e6ce}
 select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid #3a4546;border-radius:3px;padding:6px;max-width:76px}
-.side{position:absolute;right:12px;top:12px;width:220px;display:flex;flex-direction:column;gap:8px;z-index:4}.resource-list{display:grid;gap:2px;max-height:260px;overflow:auto}.resource{display:flex;align-items:center;gap:8px;padding:5px 6px;background:#202729;border-radius:2px;font-size:12px}.swatch{width:13px;height:13px;border-radius:1px;border:0;flex:none}.resource .name{flex:1}.resource .count{font-variant-numeric:tabular-nums;color:#d7c18f}
-.inventory-tabs{display:flex;gap:4px;flex-wrap:wrap}.tab.active{background:#51452e;border-color:var(--accent)}.inventory-view{display:none}.inventory-view.active{display:block}
+.side{position:absolute;right:12px;top:12px;width:220px;display:flex;flex-direction:column;gap:8px;z-index:4}.resource-list{display:grid;gap:2px;max-height:260px;overflow:auto}.resource{display:flex;align-items:center;gap:8px;padding:5px 6px;background:#202729;border-radius:2px;font-size:12px}.swatch{width:13px;height:13px;border-radius:1px;border:0;flex:none}.resource .name{flex:1}.resource .count{font-variant-numeric:tabular-nums;color:#c4ceca}
+.inventory-tabs{display:flex;gap:4px;flex-wrap:wrap}.tab.active{background:#394344;border-color:var(--accent)}.inventory-view{display:none}.inventory-view.active{display:block}
 .drawer{display:none;position:fixed;inset:0;background:#0009;z-index:10;justify-content:flex-end}.drawer.open{display:flex}.drawer-card{background:#1a2022;width:min(420px,92vw);height:100%;padding:16px;overflow:auto;border-left:1px solid #3a4546}.drawer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .footer-note{color:var(--muted);font-size:11px;margin-top:8px}.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#252e30;border:1px solid #566363;padding:8px 13px;border-radius:4px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}.toast.show{opacity:1}
 .mobile-resource{display:none}
