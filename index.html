@@ -100,8 +100,11 @@ const typeById=id=>TYPES.find(t=>t.id===id);
 // Seeded 2D gradient Perlin noise and fractal Brownian motion.
 let worldSeed=0;
 const SAVE_KEY="stoneblock-world-v1";
-function saveWorld(show=true){try{const wrap=document.querySelector(".world-wrap"),changes=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(world[y][x]!==baseWorld[y][x])changes.push([i,world[y][x]]);}const data={version:2,seed:worldSeed,changes,inventory,mined,selected,mode,scrollLeft:wrap.scrollLeft,scrollTop:wrap.scrollTop};localStorage.setItem(SAVE_KEY,JSON.stringify(data));if(show)toast("ワールドを保存しました（変更箇所 "+changes.length+"）");return true;}catch(e){toast("保存できませんでした（容量・ブラウザ設定を確認）");return false;}}
-function loadWorld(show=true){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw){if(show)toast("保存データがありません");return false;}const d=JSON.parse(raw);if(![1,2].includes(d.version))throw new Error("invalid save");worldSeed=Number.isFinite(d.seed)?d.seed:0;baseWorld=generateBase();world=baseWorld.map(row=>row.slice());if(d.version===2){if(!Array.isArray(d.changes))throw new Error("invalid changes");for(const change of d.changes){if(!Array.isArray(change)||change.length!==2)continue;const i=change[0],id=change[1];if(!Number.isInteger(i)||i<0||i>=W*H||(id!==null&&!typeById(id)))continue;world[Math.floor(i/W)][i%W]=id;}}else{if(!Array.isArray(d.world)||d.world.length!==H||d.world.some(row=>!Array.isArray(row)||row.length!==W))throw new Error("invalid legacy save");world=d.world;}inventory={};for(const t of TYPES)inventory[t.id]=Number(d.inventory?.[t.id])||0;mined=Number(d.mined)||0;selected=typeById(d.selected)?d.selected:"dirt";mode=d.mode==="place"?"place":"mine";updateVisibility();setMode(mode);render();const wrap=document.querySelector(".world-wrap");wrap.scrollLeft=Number(d.scrollLeft)||0;wrap.scrollTop=Number(d.scrollTop)||0;drawWorld();drawMinimap();if(show)toast("保存したワールドを読み込みました");return true;}catch(e){if(show)toast("保存データを読み込めませんでした");return false;}}
+const INVENTORY_KEY="stoneblock-inventory-v1";
+function saveInventory(){try{localStorage.setItem(INVENTORY_KEY,JSON.stringify(inventory));return true;}catch(e){toast("インベントリを保存できませんでした");return false;}}
+function loadInventory(){try{const raw=localStorage.getItem(INVENTORY_KEY);const saved=raw?JSON.parse(raw):null;inventory={};for(const t of TYPES)inventory[t.id]=Number(saved?.[t.id])||0;}catch(e){inventory={};for(const t of TYPES)inventory[t.id]=0;}}
+function saveWorld(show=true){try{const wrap=document.querySelector(".world-wrap"),changes=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(world[y][x]!==baseWorld[y][x])changes.push([i,world[y][x]]);}const data={version:3,seed:worldSeed,changes,mined,selected,mode,scrollLeft:wrap.scrollLeft,scrollTop:wrap.scrollTop};localStorage.setItem(SAVE_KEY,JSON.stringify(data));if(show)toast("ワールドを保存しました（変更箇所 "+changes.length+"）");return true;}catch(e){toast("保存できませんでした（容量・ブラウザ設定を確認）");return false;}}
+function loadWorld(show=true){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw){if(show)toast("保存データがありません");return false;}const d=JSON.parse(raw);if(![1,2,3].includes(d.version))throw new Error("invalid save");worldSeed=Number.isFinite(d.seed)?d.seed:0;baseWorld=generateBase();world=baseWorld.map(row=>row.slice());if(d.version===2){if(!Array.isArray(d.changes))throw new Error("invalid changes");for(const change of d.changes){if(!Array.isArray(change)||change.length!==2)continue;const i=change[0],id=change[1];if(!Number.isInteger(i)||i<0||i>=W*H||(id!==null&&!typeById(id)))continue;world[Math.floor(i/W)][i%W]=id;}}else{if(!Array.isArray(d.world)||d.world.length!==H||d.world.some(row=>!Array.isArray(row)||row.length!==W))throw new Error("invalid legacy save");world=d.world;}if(d.version<3&&!localStorage.getItem(INVENTORY_KEY)){inventory={};for(const t of TYPES)inventory[t.id]=Number(d.inventory?.[t.id])||0;saveInventory();}mined=Number(d.mined)||0;selected=typeById(d.selected)?d.selected:"dirt";mode=d.mode==="place"?"place":"mine";updateVisibility();setMode(mode);render();const wrap=document.querySelector(".world-wrap");wrap.scrollLeft=Number(d.scrollLeft)||0;wrap.scrollTop=Number(d.scrollTop)||0;drawWorld();drawMinimap();if(show)toast("保存したワールドを読み込みました");return true;}catch(e){if(show)toast("保存データを読み込めませんでした");return false;}}
 function hash2(ix,iy){
  let h=(Math.imul(ix,374761393)+Math.imul(iy,668265263)+worldSeed)|0;
  h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967295;
@@ -165,7 +168,6 @@ function generateBase(){
 function generate(seed=null){
  worldSeed=seed===null?Math.floor(Math.random()*2147483647):seed;
  baseWorld=generateBase();world=baseWorld.map(row=>row.slice());
- inventory={};for(const t of TYPES)inventory[t.id]=0;
  mined=0;updateVisibility();render();
 }
 function isAir(x,y){return x<0||y<0||x>=W||y>=H||world[y][x]===EMPTY;}
@@ -210,12 +212,12 @@ function interact(x,y){
   const id=world[y][x];
   if(id===EMPTY)return;
   world[y][x]=EMPTY;inventory[id]=(inventory[id]||0)+1;mined++;updateVisibility();
-  render();saveWorld(false);toast("1マス採掘しました");
+  render();saveInventory();saveWorld(false);toast("1マス採掘しました");
  }else{
   if(!isAir(x,y)||!adjacentToSolid(x,y)){toast("ブロックに接している空気マスを選んでください");return;}
   const id=selected,t=typeById(id);
   if(inventory[id]<1){toast(t.name+"が足りません（所持 0 個）");return;}
-  world[y][x]=id;inventory[id]--;updateVisibility();render();saveWorld(false);toast(t.name+"を1マス設置しました");
+  world[y][x]=id;inventory[id]--;updateVisibility();render();saveInventory();saveWorld(false);toast(t.name+"を1マス設置しました");
  }
 }
 function resourceRow(t){
@@ -243,7 +245,8 @@ $("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if
 $("reset").onclick=()=>{if(confirm("新しいシードでワールドとインベントリを初期化しますか？")){generate();saveWorld(false);toast("新しいワールドを生成しました：seed "+worldSeed);}};
  $("seedWorld").onclick=()=>{const raw=prompt("ワールドのシード値を入力してください（同じ値なら同じ地形になります）",String(worldSeed));if(raw===null)return;let seed=Number(raw);if(!Number.isSafeInteger(seed)){seed=0;for(const ch of raw)seed=(Math.imul(seed,31)+ch.charCodeAt(0))|0;seed=Math.abs(seed);}generate(seed);saveWorld(false);toast("シード "+worldSeed+" のワールドを生成しました");};
 $("saveWorld").onclick=()=>saveWorld(true);$("loadWorld").onclick=()=>loadWorld(true);
-const hasSavedWorld=loadWorld(false);if(!hasSavedWorld){generate();saveWorld(false);}
+loadInventory();
+ const hasSavedWorld=loadWorld(false);if(!hasSavedWorld){generate();saveWorld(false);}
  const wrap=document.querySelector(".world-wrap");
  if(!hasSavedWorld){wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;}
  let saveScrollTimer;wrap.addEventListener("scroll",()=>{drawWorld();drawMinimap();clearTimeout(saveScrollTimer);saveScrollTimer=setTimeout(()=>saveWorld(false),500);},{passive:true});
