@@ -5,27 +5,38 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>StoneBlock — 地下採掘</title>
 <style>
-:root{color-scheme:dark;--bg:#10151c;--panel:#1a232e;--panel2:#222e3b;--line:#344454;--text:#e8eef5;--muted:#9aabba;--accent:#e2ad58;--good:#83c99b}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#202d3b,#10151c 65%);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
-button,input{font:inherit}button{cursor:pointer;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px}button:hover{border-color:var(--accent)}button:disabled{opacity:.4;cursor:not-allowed}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);background:#121a23dd;position:sticky;top:0;z-index:5;backdrop-filter:blur(10px)}
-.brand{font-size:19px;font-weight:800;letter-spacing:.04em}.brand span{color:var(--accent)}.subtitle{color:var(--muted);font-size:12px}
-main{max-width:1250px;margin:auto;padding:18px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
-.panel{background:#18222ddd;border:1px solid var(--line);border-radius:13px;box-shadow:0 12px 32px #0003;overflow:hidden}.panel-head{padding:12px 15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}.panel-body{padding:14px}
-.stats{display:flex;gap:8px;flex-wrap:wrap}.stat{background:#111923;border:1px solid var(--line);padding:6px 10px;border-radius:8px;color:var(--muted);font-size:12px}.stat b{color:var(--text);margin-left:5px}
-.world-wrap{overflow:auto;background:#0c1219;padding:18px;min-height:440px;display:flex;justify-content:center;align-items:center}
-#world{display:grid;gap:3px;user-select:none;touch-action:manipulation}
-.tile{width:clamp(28px,4.1vw,43px);height:clamp(28px,4.1vw,43px);padding:0;border-radius:5px;border:1px solid #ffffff12;position:relative;display:grid;place-items:center;box-shadow:inset 0 1px #ffffff12,inset 0 -3px #0002;transition:filter .12s,transform .12s}
-.tile:hover{filter:brightness(1.25);transform:scale(1.04);z-index:1}.tile.air{background:#101923;border:1px dashed #263646;box-shadow:none;cursor:default}.tile.air.placeable{cursor:crosshair;outline:2px solid #83c99b88;outline-offset:-2px}.tile.locked{cursor:not-allowed;filter:brightness(.7)}.tile.reachable{outline:2px solid #e2ad58aa;outline-offset:-2px}.tile .symbol{font-size:15px;text-shadow:0 1px 3px #0009}.tile .amount{position:absolute;right:3px;bottom:0;font-size:9px;color:#fff;text-shadow:0 1px 2px #000}
-.legend{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}
-.modebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.modebtn.active{background:#674b25;border-color:var(--accent);color:#ffe1ad}.modebtn.place.active{background:#244b38;border-color:var(--good);color:#c7f3d5}
-select,input[type=number]{background:#101923;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px;max-width:120px}
-.side{display:flex;flex-direction:column;gap:14px}.resource-list{display:grid;gap:5px;max-height:340px;overflow:auto}.resource{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:7px;background:#111923}.swatch{width:18px;height:18px;border-radius:4px;border:1px solid #ffffff44;flex:none}.resource .name{flex:1}.resource .count{font-variant-numeric:tabular-nums;color:#f0c77f}
-.inventory-tabs{display:flex;gap:5px;flex-wrap:wrap}.tab.active{background:#654a26;border-color:var(--accent)}.inventory-view{display:none}.inventory-view.active{display:block}
-.drawer{display:none;position:fixed;inset:0;background:#0009;z-index:10;justify-content:flex-end}.drawer.open{display:flex}.drawer-card{background:var(--panel);width:min(420px,92vw);height:100%;padding:18px;overflow:auto;border-left:1px solid var(--line)}.drawer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.footer-note{color:var(--muted);font-size:12px;margin-top:10px}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#263747;border:1px solid #52677b;padding:9px 15px;border-radius:9px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}.toast.show{opacity:1}
+:root{color-scheme:dark;--bg:#101315;--panel:#1a2022;--panel2:#252d2f;--line:#343d3f;--text:#e4e9e7;--muted:#929e99;--accent:#d5b36b;--good:#8fba9a}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input{font:inherit}button{cursor:pointer;color:inherit;background:#252d2f;border:1px solid #3a4546;border-radius:4px;padding:7px 10px}button:hover{background:#303a3b;border-color:#687675}button:disabled{opacity:.35;cursor:not-allowed}
+header{height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid #30393a;background:#171d1f;position:relative;z-index:5}
+.brand{font-size:17px;font-weight:800;letter-spacing:.08em}.brand span{color:var(--accent)}.subtitle{color:var(--muted);font-size:11px}
+main{height:calc(100dvh - 54px);width:100%;margin:0;padding:0;display:block;position:relative}
+.panel{background:#1a2022;border:1px solid #303a3b;border-radius:5px;box-shadow:none;overflow:hidden}.panel-head{padding:9px 11px;border-bottom:1px solid #303a3b;display:flex;justify-content:space-between;align-items:center;gap:8px}.panel-body{padding:10px}
+.stats{display:flex;gap:6px}.stat{background:#202729;border:1px solid #333e40;padding:5px 9px;border-radius:3px;color:var(--muted);font-size:11px}.stat b{color:var(--text);margin-left:4px}
+main>section{height:100%;border:0!important;border-radius:0!important;background:transparent!important}
+main>section>.panel-head{position:absolute;top:12px;left:14px;z-index:3;border:0;background:#171d1fdc;border-radius:4px;padding:7px 9px}
+main>section>.panel-body{position:absolute;top:12px;right:248px;z-index:3;padding:0;background:#171d1fdc;border-radius:4px}
+main>section>.panel-body .subtitle{display:none}
+.world-wrap{height:100%;width:100%;overflow:hidden;background:#101516;padding:0;display:flex;justify-content:center;align-items:center}
+#world{display:grid;gap:1px;user-select:none;touch-action:manipulation;width:min(calc(100vw - 280px),calc(100dvh - 86px));height:min(calc(100vw - 280px),calc(100dvh - 86px));grid-template-columns:repeat(19,minmax(0,1fr));grid-template-rows:repeat(19,minmax(0,1fr));background:#0d1112}
+.tile{width:100%;height:100%;min-width:0;min-height:0;padding:0;border:0;border-radius:0;position:relative;display:block;box-shadow:none;transition:filter .1s}
+.tile:hover{filter:brightness(1.14);transform:none;z-index:1}.tile.air{background:#11191a;border:0;box-shadow:none;cursor:default}.tile.air.placeable{cursor:crosshair;outline:1px solid #9bc9a5;outline-offset:-1px}.tile.locked{cursor:not-allowed;filter:brightness(.72)}.tile.reachable{outline:1px solid #d5b36b;outline-offset:-1px}
+.legend{display:none}.modebar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.modebtn.active{background:#51452e;border-color:var(--accent);color:#f1d9a6}.modebtn.place.active{background:#294235;border-color:var(--good);color:#c9e6ce}
+select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid #3a4546;border-radius:3px;padding:6px;max-width:76px}
+.side{position:absolute;right:12px;top:12px;width:220px;display:flex;flex-direction:column;gap:8px;z-index:4}.resource-list{display:grid;gap:2px;max-height:260px;overflow:auto}.resource{display:flex;align-items:center;gap:8px;padding:5px 6px;background:#202729;border-radius:2px;font-size:12px}.swatch{width:13px;height:13px;border-radius:1px;border:0;flex:none}.resource .name{flex:1}.resource .count{font-variant-numeric:tabular-nums;color:#d7c18f}
+.inventory-tabs{display:flex;gap:4px;flex-wrap:wrap}.tab.active{background:#51452e;border-color:var(--accent)}.inventory-view{display:none}.inventory-view.active{display:block}
+.drawer{display:none;position:fixed;inset:0;background:#0009;z-index:10;justify-content:flex-end}.drawer.open{display:flex}.drawer-card{background:#1a2022;width:min(420px,92vw);height:100%;padding:16px;overflow:auto;border-left:1px solid #3a4546}.drawer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.footer-note{color:var(--muted);font-size:11px;margin-top:8px}.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#252e30;border:1px solid #566363;padding:8px 13px;border-radius:4px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}.toast.show{opacity:1}
 .mobile-resource{display:none}
-@media(max-width:850px){main{grid-template-columns:1fr;padding:10px}.side{display:none}.mobile-resource{display:flex;gap:7px;align-items:center}.world-wrap{min-height:360px;padding:10px}.tile{width:clamp(27px,8vw,39px);height:clamp(27px,8vw,39px)}header{padding:10px 12px}.subtitle{display:none}}
+@media(max-width:850px){
+ header{height:48px;padding:0 9px}.brand{font-size:15px}.subtitle{display:none}.stats .stat:first-child{display:none}
+ main{height:calc(100dvh - 48px)}
+ main>section>.panel-head{top:7px;left:7px;padding:5px 6px}
+ main>section>.panel-body{top:auto;right:7px;bottom:7px;padding:0}
+ main>section>.panel-body .modebar{gap:4px}
+ #world{width:min(calc(100vw - 12px),calc(100dvh - 112px));height:min(calc(100vw - 12px),calc(100dvh - 112px))}
+ .side{display:none}.mobile-resource{display:flex;gap:5px;align-items:center}.mobile-resource .stat{display:none}
+}
 </style>
 </head>
 <body>
@@ -38,7 +49,7 @@ select,input[type=number]{background:#101923;color:var(--text);border:1px solid 
   <div class="modebar"><label for="amount">設置数</label><input id="amount" type="number" min="1" max="999" value="1"><button id="reset">ワールド再生成</button></div>
  </div>
  <div class="world-wrap"><div id="world" aria-label="採掘フィールド"></div></div>
- <div class="legend"><span>✦ 金色の枠＝空気に接していて操作可能</span><span>暗いマス＝まだ掘れない</span><span>中央の空洞から掘り進めます</span></div>
+
 </section>
 <aside class="side">
  <section class="panel"><div class="panel-head"><strong>資源一覧</strong><button id="openInventory">インベントリを開く</button></div><div class="panel-body"><div class="resource-list" id="quickResources"></div><div class="footer-note">左右の矢印で資源リストを切り替えできます。</div><div class="modebar" style="margin-top:10px;justify-content:space-between"><button id="prevPage">← 前へ</button><span id="pageLabel" class="subtitle">1 / 3</span><button id="nextPage">次へ →</button></div></div></section>
@@ -96,7 +107,7 @@ function render(){
  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
   const id=world[y][x],b=document.createElement("button");b.className="tile";
   if(id===EMPTY){b.classList.add("air");const canPlace=mode==="place"&&adjacentToSolid(x,y);b.classList.toggle("placeable",canPlace);b.disabled=!canPlace;b.setAttribute("aria-label","空気（設置可能）");if(canPlace)b.addEventListener("click",()=>interact(x,y));}
-  else{const t=typeById(id),ok=exposed(x,y);b.style.background=t.color;b.classList.toggle("reachable",ok);b.classList.toggle("locked",!ok);b.innerHTML=`<span class="symbol">${t.symbol}</span>`;b.title=t.name+(ok?" — 操作可能":" — 空気に接していません");b.setAttribute("aria-label",t.name);if(mode==="mine"&&ok)b.addEventListener("click",()=>interact(x,y));}
+  else{const t=typeById(id),ok=exposed(x,y);b.style.background=t.color;b.classList.toggle("reachable",ok);b.classList.toggle("locked",!ok);b.innerHTML="";b.title=t.name+(ok?" — 操作可能":" — 空気に接していません");b.setAttribute("aria-label",t.name);if(mode==="mine"&&ok)b.addEventListener("click",()=>interact(x,y));}
   el.appendChild(b);
  }
  $("mined").textContent=mined;const total=Object.values(inventory).reduce((a,b)=>a+b,0);$("total").textContent=total;$("totalMobile").textContent=total;
