@@ -17,8 +17,8 @@ main>section{height:100%;border:0!important;border-radius:0!important;background
 main>section>.panel-head{position:absolute;top:12px;left:14px;z-index:3;border:0;background:#171d1fdc;border-radius:4px;padding:7px 9px}
 main>section>.panel-body{position:absolute;top:12px;right:248px;z-index:3;padding:0;background:#171d1fdc;border-radius:4px}
 main>section>.panel-body .subtitle{display:none}
-.world-wrap{height:100%;width:100%;overflow:hidden;background:#101516;padding:0;display:flex;justify-content:center;align-items:center}
-#world{display:grid;gap:1px;user-select:none;touch-action:manipulation;width:min(calc(100vw - 280px),calc(100dvh - 86px));height:min(calc(100vw - 280px),calc(100dvh - 86px));grid-template-columns:repeat(19,minmax(0,1fr));grid-template-rows:repeat(19,minmax(0,1fr));background:#0d1112}
+.world-wrap{height:100%;width:100%;overflow:auto;background:#101516;padding:0;display:block;overscroll-behavior:contain;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+#world{display:grid;gap:1px;user-select:none;touch-action:pan-x pan-y;width:max-content;min-width:100%;height:auto;grid-template-columns:repeat(31,clamp(32px,3.4vw,48px));grid-template-rows:repeat(31,clamp(32px,3.4vw,48px));background:#0d1112}
 .tile{width:100%;height:100%;min-width:0;min-height:0;padding:0;border:0;border-radius:0;position:relative;display:block;box-shadow:none;transition:filter .1s}
 .tile:hover{filter:brightness(1.14);transform:none;z-index:1}.tile.air{background:#11191a;border:0;box-shadow:none;cursor:default}.tile.air.placeable{cursor:crosshair;outline:1px solid #9bc9a5;outline-offset:-1px}.tile.locked{cursor:not-allowed;filter:brightness(.72)}.tile.reachable{outline:1px solid #a6b5b2;outline-offset:-1px}
 .legend{display:none}.modebar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.modebtn.active{background:#394344;border-color:var(--accent);color:#e0e8e5}.modebtn.place.active{background:#294235;border-color:var(--good);color:#c9e6ce}
@@ -34,7 +34,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
  main>section>.panel-head{top:7px;left:7px;padding:5px 6px}
  main>section>.panel-body{top:auto;right:7px;bottom:7px;padding:0}
  main>section>.panel-body .modebar{gap:4px}
- #world{width:min(calc(100vw - 12px),calc(100dvh - 112px));height:min(calc(100vw - 12px),calc(100dvh - 112px))}
+ #world{grid-template-columns:repeat(31,36px);grid-template-rows:repeat(31,36px)}
  .side{display:none}.mobile-resource{display:flex;gap:5px;align-items:center}.mobile-resource .stat{display:none}
 }
 </style>
@@ -45,15 +45,15 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
 <section class="panel">
  <div class="panel-head"><strong>地下フィールド</strong><div class="modebar"><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button></div></div>
  <div class="panel-body" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
-  <div class="subtitle" id="hint">空気に接しているブロックをクリックして採掘</div>
-  <div class="modebar"><label for="amount">設置数</label><input id="amount" type="number" min="1" max="999" value="1"><button id="reset">ワールド再生成</button></div>
+  <div class="subtitle" id="hint">空気に接しているブロックをタップして2×2で採掘</div>
+  <div class="modebar"><button id="reset">ワールド再生成</button></div>
  </div>
  <div class="world-wrap"><div id="world" aria-label="採掘フィールド"></div></div>
 
 </section>
 <aside class="side">
  <section class="panel"><div class="panel-head"><strong>資源一覧</strong><button id="openInventory">インベントリを開く</button></div><div class="panel-body"><div class="resource-list" id="quickResources"></div><div class="footer-note">左右の矢印で資源リストを切り替えできます。</div><div class="modebar" style="margin-top:10px;justify-content:space-between"><button id="prevPage">← 前へ</button><span id="pageLabel" class="subtitle">1 / 3</span><button id="nextPage">次へ →</button></div></div></section>
- <section class="panel"><div class="panel-head"><strong>遊び方</strong></div><div class="panel-body"><ol style="padding-left:19px;margin:0;color:var(--muted)"><li>空洞に接しているブロックをクリック。</li><li>採掘ONなら資源として回収。</li><li>設置OFFなら選択した資源を指定数だけ配置。</li><li>掘るほど新しい資源層に到達します。</li></ol></div></section>
+ <section class="panel"><div class="panel-head"><strong>遊び方</strong></div><div class="panel-body"><ol style="padding-left:19px;margin:0;color:var(--muted)"><li>空洞に接しているブロックをタップすると2×2で採掘。</li><li>採掘ONならタップ位置を起点に2×2マスを回収。</li><li>設置OFFなら選択した資源を指定数だけ配置。</li><li>掘るほど新しい資源層に到達します。</li></ol></div></section>
 </aside>
 </main>
 <div class="drawer" id="drawer"><div class="drawer-card"><div class="drawer-head"><strong style="font-size:18px">インベントリ</strong><button id="closeInventory">閉じる ✕</button></div><div class="inventory-tabs" id="tabs"><button class="tab active" data-tab="all">すべて</button><button class="tab" data-tab="terrain">地層</button><button class="tab" data-tab="rock">岩石</button><button class="tab" data-tab="metal">金属</button><button class="tab" data-tab="gem">宝石</button></div><div class="panel-body" style="padding:12px 0"><div class="resource-list" id="inventoryResources"></div><div class="footer-note">設置モードでは、ここで選択したブロックをフィールドに配置できます。</div></div></div></div>
@@ -83,7 +83,7 @@ const TYPES = [
 {id:"topaz",name:"トパーズ",group:"gem",color:"#e9ae49",symbol:"✦",weight:.7},
 {id:"aquamarine",name:"アクアマリン",group:"gem",color:"#69c9d8",symbol:"✦",weight:.7}
 ];
-const W=19,H=19,EMPTY=null;
+const W=31,H=31,EMPTY=null;
 let world=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all";
 const $=id=>document.getElementById(id);
 const typeById=id=>TYPES.find(t=>t.id===id);
@@ -94,8 +94,9 @@ function weightedType(depth,x,y){
  return "stone";
 }
 function generate(){
- world=Array.from({length:H},(_,y)=>Array.from({length:W},(_,x)=>weightedType(Math.max(Math.abs(x-9),Math.abs(y-9)),x,y)));
- for(let y=7;y<=11;y++)for(let x=7;x<=11;x++)world[y][x]=EMPTY;
+ const cx=Math.floor(W/2),cy=Math.floor(H/2);
+ world=Array.from({length:H},(_,y)=>Array.from({length:W},(_,x)=>weightedType(Math.max(Math.abs(x-cx),Math.abs(y-cy)),x,y)));
+ for(let y=cy-2;y<=cy+2;y++)for(let x=cx-2;x<=cx+2;x++)world[y][x]=EMPTY;
  inventory={};for(const t of TYPES)inventory[t.id]=0;
  mined=0;render();
 }
@@ -103,7 +104,7 @@ function isAir(x,y){return x<0||y<0||x>=W||y>=H||world[y][x]===EMPTY;}
 function adjacentToSolid(x,y){return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>x+dx>=0&&y+dy>=0&&x+dx<W&&y+dy<H&&world[y+dy][x+dx]!==EMPTY);}
 function exposed(x,y){if(isAir(x,y))return false;return isAir(x+1,y)||isAir(x-1,y)||isAir(x,y+1)||isAir(x,y-1);}
 function render(){
- const el=$("world");el.style.gridTemplateColumns=`repeat(${W},auto)`;el.innerHTML="";
+ const el=$("world");el.innerHTML="";
  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
   const id=world[y][x],b=document.createElement("button");b.className="tile";
   if(id===EMPTY){b.classList.add("air");const canPlace=mode==="place"&&adjacentToSolid(x,y);b.classList.toggle("placeable",canPlace);b.disabled=!canPlace;b.setAttribute("aria-label","空気（設置可能）");if(canPlace)b.addEventListener("click",()=>interact(x,y));}
@@ -116,18 +117,14 @@ function render(){
 function interact(x,y){
  if(mode==="mine"){
   if(!exposed(x,y)){toast("このブロックはまだ空気に接していません");return;}
-  const id=world[y][x];world[y][x]=EMPTY;inventory[id]=(inventory[id]||0)+1;mined++;render();
+  let dug=0;
+  for(let dy=0;dy<2;dy++)for(let dx=0;dx<2;dx++){const tx=x+dx,ty=y+dy;if(tx>=W||ty>=H)continue;const id=world[ty][tx];if(id!==EMPTY){world[ty][tx]=EMPTY;inventory[id]=(inventory[id]||0)+1;mined++;dug++;}}
+  render();toast(dug+ "マス採掘しました");
  }else{
   if(!isAir(x,y)||!adjacentToSolid(x,y)){toast("ブロックに接している空気マスを選んでください");return;}
-  const id=selected,t=typeById(id),n=Math.max(1,Math.min(999,Math.floor(Number($("amount").value)||1)));
-  if(inventory[id]<n){toast(t.name+"が足りません（所持 "+inventory[id]+" 個）");return;}
-  const queue=[[x,y]],seen=new Set(),placed=[];
-  while(queue.length&&placed.length<n){const [cx,cy]=queue.shift(),key=cx+","+cy;if(seen.has(key))continue;seen.add(key);
-   if(cx<0||cy<0||cx>=W||cy>=H||!isAir(cx,cy)||!adjacentToSolid(cx,cy))continue;
-   world[cy][cx]=id;placed.push([cx,cy]);
-   queue.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
-  }
-  inventory[id]-=placed.length;render();toast(t.name+"を"+placed.length+"個設置しました");
+  const id=selected,t=typeById(id);
+  if(inventory[id]<1){toast(t.name+"が足りません（所持 0 個）");return;}
+  world[y][x]=id;inventory[id]--;render();toast(t.name+"を1マス設置しました");
  }
 }
 function resourceRow(t){
@@ -154,6 +151,7 @@ $("drawer").addEventListener("click",e=>{if(e.target===$("drawer"))$("drawer").c
 $("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;invTab=b.dataset.tab;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));renderResources();});
 $("reset").onclick=()=>{if(confirm("ワールドとインベントリを初期化しますか？"))generate();};
 generate();
+ const wrap=document.querySelector(".world-wrap");wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;
 })();
 </script>
 </body>
