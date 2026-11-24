@@ -84,7 +84,7 @@ const TYPES = [
 {id:"aquamarine",name:"アクアマリン",group:"gem",color:"#69c9d8",symbol:"✦",weight:.7}
 ];
 const W=300,H=300,EMPTY=null;
-let world=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all";
+let world=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",revealed=[];\nconst REVEAL_RADIUS=5;\nfunction revealAround(cx,cy){for(let y=Math.max(0,cy-REVEAL_RADIUS);y<=Math.min(H-1,cy+REVEAL_RADIUS);y++)for(let x=Math.max(0,cx-REVEAL_RADIUS);x<=Math.min(W-1,cx+REVEAL_RADIUS);x++)revealed[y][x]=true;}
 const $=id=>document.getElementById(id);
 const typeById=id=>TYPES.find(t=>t.id===id);
 // Seeded 2D gradient Perlin noise and fractal Brownian motion.
@@ -187,13 +187,13 @@ function interact(x,y){
   if(!exposed(x,y)){toast("このブロックはまだ空気に接していません");return;}
   const id=world[y][x];
   if(id===EMPTY)return;
-  world[y][x]=EMPTY;inventory[id]=(inventory[id]||0)+1;mined++;
+  world[y][x]=EMPTY;inventory[id]=(inventory[id]||0)+1;mined++;revealAround(x,y);
   render();toast("1マス採掘しました");
  }else{
   if(!isAir(x,y)||!adjacentToSolid(x,y)){toast("ブロックに接している空気マスを選んでください");return;}
   const id=selected,t=typeById(id);
   if(inventory[id]<1){toast(t.name+"が足りません（所持 0 個）");return;}
-  world[y][x]=id;inventory[id]--;render();toast(t.name+"を1マス設置しました");
+  world[y][x]=id;inventory[id]--;revealAround(x,y);render();toast(t.name+"を1マス設置しました");
  }
 }
 function resourceRow(t){
