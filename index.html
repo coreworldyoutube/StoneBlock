@@ -17,10 +17,10 @@ main>section{height:100%;border:0!important;border-radius:0!important;background
 main>section>.panel-head{position:absolute;top:12px;left:14px;z-index:3;border:0;background:#171d1fdc;border-radius:4px;padding:7px 9px}
 main>section>.panel-body{position:absolute;top:12px;right:248px;z-index:3;padding:0;background:#171d1fdc;border-radius:4px}
 main>section>.panel-body .subtitle{display:none}
-.world-wrap{height:100%;width:100%;overflow:auto;background:#101516;padding:0;display:block;overscroll-behavior:contain;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
-#world{display:grid;gap:1px;user-select:none;touch-action:pan-x pan-y;width:max-content;min-width:100%;height:auto;grid-template-columns:repeat(300,36px);grid-template-rows:repeat(300,36px);background:#0d1112}
-.tile{width:100%;height:100%;min-width:0;min-height:0;padding:0;border:0;border-radius:0;position:relative;display:block;box-shadow:none;transition:filter .1s}
-.tile:hover{filter:brightness(1.08);transform:none;z-index:1}.tile:focus,.tile:focus-visible,.tile:active{outline:none!important;box-shadow:none!important}.tile.air{background:#11191a;border:0;box-shadow:none;cursor:default}.tile.air.placeable{cursor:crosshair;outline:none}.tile.locked{cursor:not-allowed;filter:brightness(.72)}.tile.reachable{outline:none}
+.world-wrap{height:100%;width:100%;overflow:auto;background:#090d0e;padding:0;display:block;overscroll-behavior:contain;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+#world-stage{position:relative;width:10800px;height:10800px}
+#world{position:sticky;top:0;left:0;display:block;width:100vw;height:100dvh;max-width:none;max-height:none;touch-action:pan-x pan-y;user-select:none;cursor:crosshair}
+
 .legend{display:none}.modebar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.modebtn.active{background:#394344;border-color:var(--accent);color:#e0e8e5}.modebtn.place.active{background:#294235;border-color:var(--good);color:#c9e6ce}
 select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid #3a4546;border-radius:3px;padding:6px;max-width:76px}
 .side{position:absolute;right:12px;top:12px;width:220px;display:flex;flex-direction:column;gap:8px;z-index:4}.resource-list{display:grid;gap:2px;max-height:260px;overflow:auto}.resource{display:flex;align-items:center;gap:8px;padding:5px 6px;background:#202729;border-radius:2px;font-size:12px}.swatch{width:13px;height:13px;border-radius:1px;border:0;flex:none}.resource .name{flex:1}.resource .count{font-variant-numeric:tabular-nums;color:#c4ceca}
@@ -34,7 +34,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
  main>section>.panel-head{top:7px;left:7px;padding:5px 6px}
  main>section>.panel-body{top:auto;right:7px;bottom:7px;padding:0}
  main>section>.panel-body .modebar{gap:4px}
- #world{grid-template-columns:repeat(300,36px);grid-template-rows:repeat(300,36px)}
+ #world{width:100vw;height:calc(100dvh - 48px)}
  .side{display:none}.mobile-resource{display:flex;gap:5px;align-items:center}.mobile-resource .stat{display:none}
 }
 </style>
@@ -48,7 +48,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
   <div class="subtitle" id="hint">空気に接しているブロックをタップして1マス採掘</div>
   <div class="modebar"><button id="reset">ワールド再生成</button></div>
  </div>
- <div class="world-wrap"><div id="world" aria-label="採掘フィールド"></div></div>
+ <div class="world-wrap"><div id="world-stage"><canvas id="world" aria-label="採掘フィールド"></canvas></div></div>
 
 </section>
 <aside class="side">
@@ -103,14 +103,34 @@ function generate(){
 function isAir(x,y){return x<0||y<0||x>=W||y>=H||world[y][x]===EMPTY;}
 function adjacentToSolid(x,y){return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>x+dx>=0&&y+dy>=0&&x+dx<W&&y+dy<H&&world[y+dy][x+dx]!==EMPTY);}
 function exposed(x,y){if(isAir(x,y))return false;return isAir(x+1,y)||isAir(x-1,y)||isAir(x,y+1)||isAir(x,y-1);}
-function render(){
- const el=$("world");el.innerHTML="";
- for(let y=0;y<H;y++)for(let x=0;x<W;x++){
-  const id=world[y][x],b=document.createElement("button");b.className="tile";
-  if(id===EMPTY){b.classList.add("air");const canPlace=mode==="place"&&adjacentToSolid(x,y);b.classList.toggle("placeable",canPlace);b.disabled=!canPlace;b.setAttribute("aria-label","空気（設置可能）");if(canPlace)b.addEventListener("click",()=>interact(x,y));}
-  else{const t=typeById(id),ok=exposed(x,y);b.style.background=t.color;b.classList.toggle("reachable",false);b.classList.toggle("locked",!ok);b.innerHTML="";b.title=t.name+(ok?" — 操作可能":" — 空気に接していません");b.setAttribute("aria-label",t.name);if(mode==="mine"&&ok)b.addEventListener("click",()=>interact(x,y));}
-  el.appendChild(b);
+function drawWorld(){
+ const canvas=$("world"),wrap=document.querySelector(".world-wrap"),ctx=canvas.getContext("2d");
+ const dpr=Math.min(window.devicePixelRatio||1,2),vw=wrap.clientWidth,vh=wrap.clientHeight;
+ canvas.width=Math.floor(vw*dpr);canvas.height=Math.floor(vh*dpr);canvas.style.width=vw+"px";canvas.style.height=vh+"px";
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle="#090d0e";ctx.fillRect(0,0,vw,vh);
+ const cell=36,sx=wrap.scrollLeft,sy=wrap.scrollTop;
+ const x0=Math.max(0,Math.floor(sx/cell)),y0=Math.max(0,Math.floor(sy/cell));
+ const x1=Math.min(W,Math.ceil((sx+vw)/cell)),y1=Math.min(H,Math.ceil((sy+vh)/cell));
+ for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
+  const id=world[y][x],px=x*cell-sx,py=y*cell-sy;
+  if(id===EMPTY)continue;
+  const t=typeById(id);ctx.fillStyle=t.color;ctx.fillRect(px,py,cell,cell);
+  // Fine, irregular mineral/soil grain: subtle pixel clusters, no tile outlines.
+  let seed=((x*374761393)^(y*668265263)^(id.length*2246822519))>>>0;
+  const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+  for(let k=0;k<13;k++){
+   const shade=rand()>.5?255:0,alpha=.035+rand()*.09;
+   ctx.fillStyle=shade?"rgba(255,255,255,"+alpha+")":"rgba(0,0,0,"+alpha+")";
+   const size=2+Math.floor(rand()*5);ctx.fillRect(px+Math.floor(rand()*(cell-size)),py+Math.floor(rand()*(cell-size)),size,size);
+  }
+  if(t.group==="metal"||t.group==="gem"){
+   for(let k=0;k<4;k++){const ox=5+rand()*25,oy=5+rand()*25;ctx.fillStyle=t.color;ctx.globalAlpha=.55+rand()*.4;ctx.fillRect(px+ox,py+oy,2+rand()*3,2+rand()*3);}
+   ctx.globalAlpha=1;
+  }
  }
+}
+function render(){
+ drawWorld();
  $("mined").textContent=mined;const total=Object.values(inventory).reduce((a,b)=>a+b,0);$("total").textContent=total;$("totalMobile").textContent=total;
  renderResources();
 }
@@ -152,7 +172,15 @@ $("drawer").addEventListener("click",e=>{if(e.target===$("drawer"))$("drawer").c
 $("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;invTab=b.dataset.tab;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));renderResources();});
 $("reset").onclick=()=>{if(confirm("ワールドとインベントリを初期化しますか？"))generate();};
 generate();
- const wrap=document.querySelector(".world-wrap");wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;
+ const wrap=document.querySelector(".world-wrap");
+ wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;
+ wrap.addEventListener("scroll",drawWorld,{passive:true});
+ $("world").addEventListener("click",e=>{
+  if(e.target!==$("world"))return;
+  const rect=wrap.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left+wrap.scrollLeft)/36),y=Math.floor((e.clientY-rect.top+wrap.scrollTop)/36);
+  if(x>=0&&y>=0&&x<W&&y<H){if(mode==="mine"){if(exposed(x,y))interact(x,y);}else if(isAir(x,y)&&adjacentToSolid(x,y))interact(x,y);}
+ });
+ window.addEventListener("resize",drawWorld);drawWorld();
 })();
 </script>
 </body>
