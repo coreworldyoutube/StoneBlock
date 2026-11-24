@@ -87,13 +87,61 @@ const W=300,H=300,EMPTY=null;
 let world=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all";
 const $=id=>document.getElementById(id);
 const typeById=id=>TYPES.find(t=>t.id===id);
+// Seeded 2D gradient Perlin noise and fractal Brownian motion.
+let worldSeed=0;
+function hash2(ix,iy){
+ let h=(Math.imul(ix,374761393)+Math.imul(iy,668265263)+worldSeed)|0;
+ h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967295;
+}
+function fade(t){return t*t*t*(t*(t*6-15)+10);}
+function perlin(x,y){
+ const x0=Math.floor(x),y0=Math.floor(y),xf=x-x0,yf=y-y0;
+ const dot=(ix,iy,dx,dy)=>{const a=hash2(ix,iy)*Math.PI*2;return Math.cos(a)*dx+Math.sin(a)*dy;};
+ const u=fade(xf),v=fade(yf);
+ const a=dot(x0,y0,xf,yf),b=dot(x0+1,y0,xf-1,yf);
+ const c=dot(x0,y0+1,xf,yf-1),d=dot(x0+1,y0+1,xf-1,yf-1);
+ const ab=a+(b-a)*u,cd=c+(d-c)*u;
+ return (ab+(cd-ab)*v)*1.4142;
+}
+function fbm(x,y,octaves=4){
+ let sum=0,amp=.5,freq=1,norm=0;
+ for(let i=0;i<octaves;i++){sum+=perlin(x*freq,y*freq)*amp;norm+=amp;amp*=.5;freq*=2;}
+ return sum/norm;
+}
 function weightedType(depth,x,y){
- const weights=TYPES.map(t=>{let w=t.weight;if(t.group==="gem")w*=Math.max(.12,Math.min(2.8,depth/45));if(t.id==="dirt"||t.id==="sand"||t.id==="clay")w*=Math.max(.08,1-depth/35);if(t.id==="basalt"||t.id==="granite"||t.id==="andesite"||t.id==="diorite")w*=1+depth/90;return w;});
- let n=Math.random()*weights.reduce((a,b)=>a+b,0);
- for(let i=0;i<TYPES.length;i++){n-=weights[i];if(n<=0)return TYPES[i].id;}
+ // Deep underground is overwhelmingly stone. Other rock types form broad geological regions.
+ const broad=fbm(x*.018,y*.018,3),medium=fbm(x*.055+41,y*.055-17,3);
+ const detail=fbm(x*.13-9,y*.13+23,2);
+ const vertical=y/H;
+ // Soil is concentrated near the upper strata, not scattered evenly through the stone.
+ if(y<18+Math.floor((fbm(x*.035,7)*.5+.5)*8)){
+  if(medium>.38&&detail>.05)return "clay";
+  if(medium<-.42&&detail<-.05)return "sand";
+  return "dirt";
+ }
+ // Most of the underground remains ordinary stone.
+ if(broad>.48&&medium>.05)return "granite";
+ if(broad<-.48&&medium<-.02)return "basalt";
+ if(medium>.48)return "diorite";
+ if(medium<-.48)return "andesite";
+ // Ore veins use a narrow noise band, making deposits appear in connected pockets.
+ const vein=fbm(x*.105+83,y*.105-29,3);
+ const depthFactor=Math.max(0,Math.min(1,(vertical-.08)/.92));
+ if(depthFactor>.12&&vein>.66&&detail>.02)return "diamond";
+ if(depthFactor>.08&&vein<-.69&&detail<-.04)return "gold";
+ if(medium>.58&&vein>.28)return "copper";
+ if(medium<-.58&&vein<-.25)return "iron";
+ if(depthFactor>.35&&broad>.55&&vein<-.48)return "silver";
+ if(depthFactor>.55&&broad<-.58&&vein>.48)return "platinum";
+ // Gems are deliberately rare and appear only in deep, compact seams.
+ if(depthFactor>.48&&Math.abs(vein)>.82&&detail>.25){
+  const gems=["ruby","emerald","amethyst","sapphire","topaz","aquamarine"];
+  return gems[Math.floor(hash2(x+991,y-337)*gems.length)];
+ }
  return "stone";
 }
 function generate(){
+ worldSeed=Math.floor(Math.random()*2147483647);
  const cx=Math.floor(W/2),cy=Math.floor(H/2);
  world=Array.from({length:H},(_,y)=>Array.from({length:W},(_,x)=>weightedType(Math.max(Math.abs(x-cx),Math.abs(y-cy)),x,y)));
  for(let y=cy-2;y<=cy+2;y++)for(let x=cx-2;x<=cx+2;x++)world[y][x]=EMPTY;
@@ -124,7 +172,7 @@ function drawWorld(){
    const size=2+Math.floor(rand()*5);ctx.fillRect(px+Math.floor(rand()*(cell-size)),py+Math.floor(rand()*(cell-size)),size,size);
   }
   if(t.group==="metal"||t.group==="gem"){
-   for(let k=0;k<4;k++){const ox=5+rand()*25,oy=5+rand()*25;ctx.fillStyle=t.color;ctx.globalAlpha=.55+rand()*.4;ctx.fillRect(px+ox,py+oy,2+rand()*3,2+rand()*3);}
+   for(let k=0;k<5;k++){const ox=4+rand()*28,oy=4+rand()*28;ctx.fillStyle=t.color;ctx.globalAlpha=.65+rand()*.3;ctx.fillRect(px+ox,py+oy,2+rand()*4,2+rand()*4);}
    ctx.globalAlpha=1;
   }
  }
