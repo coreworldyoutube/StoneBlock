@@ -178,7 +178,7 @@ function loadWorld(show=true){try{
   for(const change of d.changes){if(!Array.isArray(change)||change.length!==2)continue;const i=change[0],id=change[1];if(!Number.isInteger(i)||i<0||i>=W*H||(id!==null&&!typeById(id)))continue;world[Math.floor(i/W)][i%W]=id;}
  }
  if(d.version<4&&!localStorage.getItem(INVENTORY_KEY())){inventory={};for(const t of TYPES)inventory[t.id]=Number(d.inventory?.[t.id])||0;saveInventory();}
- mined=Number(d.mined)||0;selected=typeById(d.selected)?d.selected:"dirt";if(activeWorld==="life"&&!BUILD_COST[selected])selected="conveyor";mode=d.mode==="place"?"place":"mine";
+ mined=Number(d.mined)||0;selected=typeById(d.selected)?d.selected:"dirt";if(activeWorld==="life"&&!typeById(selected))selected="stone";mode=d.mode==="place"?"place":"mine";
  updateVisibility();setMode(mode);render();$("seedInput").value=String(worldSeed);
  const wrap=document.querySelector(".world-wrap");wrap.scrollLeft=Number(d.scrollLeft)||0;wrap.scrollTop=Number(d.scrollTop)||0;
  drawWorld();drawMinimap();if(show)toast("保存したワールドを読み込みました");return true;
@@ -354,11 +354,16 @@ function interact(x,y){
    inventory[drops[id]]=(inventory[drops[id]]||0)+1;world[y][x]=EMPTY;mined++;saveInventory();saveWorld(false);render();toast(typeById(drops[id]).name+"を1個回収");return;
   }
   if(id){toast("そこには配置できません");return;}
-  const cost=BUILD_COST[selected];if(!cost){toast("建築物を選択してください");return;}
-  const missing=Object.entries(cost).filter(([item,n])=>(inventory[item]||0)<n);
-  if(missing.length){toast("資源不足："+missing.map(([item,n])=>typeById(item).name+" "+n).join(" / "));return;}
-  for(const [item,n] of Object.entries(cost))inventory[item]-=n;
-  world[y][x]=selected;saveInventory();saveWorld(false);render();toast(typeById(selected).name+"を建設しました");return;
+  const cost=BUILD_COST[selected];
+  if(cost){
+   const missing=Object.entries(cost).filter(([item,n])=>(inventory[item]||0)<n);
+   if(missing.length){toast("資源不足："+missing.map(([item,n])=>typeById(item).name+" "+n).join(" / "));return;}
+   for(const [item,n] of Object.entries(cost))inventory[item]-=n;
+  }else{
+   if(!typeById(selected)||!(inventory[selected]>0)){toast(typeById(selected)?.name+"が足りません");return;}
+   inventory[selected]--;
+  }
+  world[y][x]=selected;saveInventory();saveWorld(false);render();toast(typeById(selected).name+"を設置しました");return;
  }
  if(mode==="mine"){
   const id=world[y][x];if(id===EMPTY)return;
@@ -403,7 +408,7 @@ function resourceRow(t){
  const name=document.createElement("span");name.className="name";name.textContent=language==="en"?(t.nameEn||t.name):t.name;
  const count=document.createElement("b");count.className="count";count.textContent=activeWorld==="life"&&t.group==="building"?(language==="en"?"Max ":"最大 ")+maxBuildable(t.id):String(inventory[t.id]||0);
  row.append(swatch,name,count);
- row.addEventListener("click",()=>{selected=t.id;if(activeWorld==="life"&&t.group==="building")setMode("place");document.querySelectorAll(".resource").forEach(e=>e.style.outline="");row.style.outline="1px solid #a6b5b2";$("hint").textContent=(language==="en"?"Selected: ":"選択中：")+name.textContent;saveWorld(false);});
+ row.addEventListener("click",()=>{selected=t.id;if(activeWorld==="life")setMode("place");document.querySelectorAll(".resource").forEach(e=>e.style.outline="");row.style.outline="1px solid #a6b5b2";$("hint").textContent=(language==="en"?"Selected: ":"選択中：")+name.textContent;saveWorld(false);});
  return row;
 }
 function renderResources(){
