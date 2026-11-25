@@ -160,6 +160,14 @@ function generateLifeBase(){
  return map;
 }
 function saveInventory(){try{localStorage.setItem(INVENTORY_KEY(),JSON.stringify(inventory));return true;}catch(e){toast("インベントリを保存できませんでした");return false;}}
+function ensureLifeStarterKit(){
+ const key="stoneblock-life-starter-kit-v1";
+ if(localStorage.getItem(key))return;
+ const kit={wood:20,stone:30,coal:12,iron:8,copper:8};
+ for(const [id,count] of Object.entries(kit))inventory[id]=(inventory[id]||0)+count;
+ saveInventory();localStorage.setItem(key,"1");
+ toast("ライフワールドの初期資材を受け取りました");
+}
 function loadInventory(){try{const raw=localStorage.getItem(INVENTORY_KEY());const saved=raw?JSON.parse(raw):null;inventory={};for(const t of TYPES)inventory[t.id]=Number(saved?.[t.id])||0;}catch(e){inventory={};for(const t of TYPES)inventory[t.id]=0;}}
 function saveWorld(show=true){try{const wrap=document.querySelector(".world-wrap"),changes=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(world[y][x]!==baseWorld[y][x])changes.push([i,world[y][x]]);}const data={version:4,seed:worldSeed,changes,mined,selected,mode,scrollLeft:wrap.scrollLeft,scrollTop:wrap.scrollTop};localStorage.setItem(SAVE_KEY(),JSON.stringify(data));if(show)toast("ワールドを保存しました（変更箇所 "+changes.length+"）");return true;}catch(e){toast("保存できませんでした（容量・ブラウザ設定を確認）");return false;}}
 function loadWorld(show=true){try{
@@ -252,14 +260,23 @@ function isAir(x,y){return x<0||y<0||x>=W||y>=H||world[y][x]===EMPTY;}
 function adjacentToSolid(x,y){return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>x+dx>=0&&y+dy>=0&&x+dx<W&&y+dy<H&&world[y+dy][x+dx]!==EMPTY);}
 function exposed(x,y){if(isAir(x,y))return false;return isAir(x+1,y)||isAir(x-1,y)||isAir(x,y+1)||isAir(x,y-1);}
 function drawLifeBackdrop(ctx,sx,sy,vw,vh,cell){
- const x0=Math.max(0,Math.floor(sx/cell)),y0=Math.max(0,Math.floor(sy/cell)),x1=Math.min(W,Math.ceil((sx+vw)/cell)),y1=Math.min(H,Math.ceil((sy+vh)/cell));
  ctx.fillStyle="#75b94f";ctx.fillRect(0,0,vw,vh);
+ // Broad, soft-edged grass variation instead of a checkerboard of different tiles.
+ for(let py=0;py<vh;py+=8)for(let px=0;px<vw;px+=8){
+  const nx=(sx+px)*.012,ny=(sy+py)*.012,n=fbm(nx+43,ny-17,3);
+  if(n>.18){ctx.fillStyle="rgba(43,105,47,"+Math.min(.13,(n-.18)*.12)+")";ctx.fillRect(px,py,8,8);}
+  else if(n<-.18){ctx.fillStyle="rgba(183,190,104,"+Math.min(.10,(-n-.18)*.1)+")";ctx.fillRect(px,py,8,8);}
+ }
+ // Small grass tufts, spaced irregularly across the landscape.
+ const x0=Math.max(0,Math.floor(sx/cell)-1),y0=Math.max(0,Math.floor(sy/cell)-1);
+ const x1=Math.min(W,Math.ceil((sx+vw)/cell)+1),y1=Math.min(H,Math.ceil((sy+vh)/cell)+1);
  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
-  const px=x*cell-sx,py=y*cell-sy,v=hash2(x+401,y-119);
-  ctx.fillStyle=v>.5?"#78bd52":"#70b64b";ctx.fillRect(px,py,cell,cell);
-  ctx.fillStyle="rgba(39,91,37,.12)";
-  for(let k=0;k<4;k++)ctx.fillRect(px+hash2(x*7+k,y*11-k)*cell,py+hash2(x*13-k,y*5+k)*cell,2,2);
-  if(Math.abs(fbm(x*.025+29,y*.025-41,2))<.035){ctx.fillStyle="#b69a65";ctx.fillRect(px,py,cell,cell);}
+  const seed=hash2(x+401,y-119);
+  if(seed>.80){
+   const px=x*cell-sx+8+hash2(x+9,y+5)*18,py=y*cell-sy+9+hash2(x-7,y+13)*18;
+   ctx.strokeStyle="rgba(48,119,52,.45)";ctx.lineWidth=1.4;ctx.beginPath();
+   ctx.moveTo(px,py+4);ctx.lineTo(px-2,py-2);ctx.moveTo(px,py+4);ctx.lineTo(px+3,py-3);ctx.stroke();
+  }
  }
 }
 function drawWorld(){
@@ -373,7 +390,7 @@ function setMode(next){
 }
 function toast(s){const e=$("toast");e.textContent=s;e.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove("show"),1700);}
 $("mineToggle").onclick=()=>{setMode(mode==="mine"?"place":"mine");saveWorld(false);};
-$("worldToggle").onclick=()=>{saveWorld(false);saveInventory();const wrap=document.querySelector(".world-wrap");activeWorld=activeWorld==="underworld"?"life":"underworld";loadInventory();const loaded=loadWorld(false);if(!loaded){if(activeWorld==="life"){worldSeed=0;baseWorld=generateLifeBase();world=baseWorld.map(row=>row.slice());mined=0;selected="conveyor";setMode("place");}else{generate();setMode("mine");}wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;saveWorld(false);}applyLanguage();render();toast(activeWorld==="life"?"ライフワールドに移動しました":"アンダーワールドに移動しました");};
+$("worldToggle").onclick=()=>{saveWorld(false);saveInventory();const wrap=document.querySelector(".world-wrap");activeWorld=activeWorld==="underworld"?"life":"underworld";loadInventory();if(activeWorld==="life")ensureLifeStarterKit();const loaded=loadWorld(false);if(!loaded){if(activeWorld==="life"){worldSeed=0;baseWorld=generateLifeBase();world=baseWorld.map(row=>row.slice());mined=0;selected="conveyor";setMode("place");}else{generate();setMode("mine");}wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;saveWorld(false);}applyLanguage();render();toast(activeWorld==="life"?"ライフワールドに移動しました":"アンダーワールドに移動しました");};
 $("languageToggle").onclick=()=>{language=language==="ja"?"en":"ja";localStorage.setItem("stoneblock-language",language);applyLanguage();};
 $("prevPage").onclick=()=>{page=Math.max(0,page-1);renderResources();};$("nextPage").onclick=()=>{page=Math.min(Math.ceil(TYPES.length/7)-1,page+1);renderResources();};
 $("openInventory").onclick=$("openInventoryMobile").onclick=()=>{$("drawer").classList.add("open");};
