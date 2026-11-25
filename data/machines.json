@@ -1,0 +1,20 @@
+[
+  {
+    "id": "conveyor",
+    "name": "コンベア",
+    "name_en": "Conveyor",
+    "color": "#778b83",
+    "description": "アイテムを指定方向へ運ぶ。1タイルにつき左右2レーン×4スロット。",
+    "description_en": "Moves items in the selected direction. Two lanes with four slots each per tile.",
+    "category": "transport"
+  },
+  {
+    "id": "furnace",
+    "name": "かまど",
+    "name_en": "Furnace",
+    "color": "#bd7650",
+    "description": "燃料と鉱石を使ってインゴットを精錬する。",
+    "description_en": "Smelts ore into ingots using fuel.",
+    "category": "processing"
+  }
+]
