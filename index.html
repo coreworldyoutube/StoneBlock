@@ -58,7 +58,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
  <section class="panel"><div class="panel-head"><strong id="howTitle">遊び方</strong></div><div class="panel-body"><ol style="padding-left:19px;margin:0;color:var(--muted)"><li>空洞に接しているブロックをタップすると、その1マスだけ採掘。</li><li>採掘ONならタップした1マスだけ回収。</li><li>設置OFFなら選択した資源を1マスずつ配置。</li><li>掘るほど新しい資源層に到達します。</li></ol></div></section>
 </aside>
 </main>
-<div class="drawer" id="drawer"><div class="drawer-card"><div class="drawer-head"><strong id="inventoryTitle" style="font-size:18px">インベントリ</strong><button id="closeInventory">閉じる ✕</button></div><div class="inventory-tabs" id="tabs"><button class="tab active" data-tab="all">すべて</button><button class="tab" data-tab="terrain">地層</button><button class="tab" data-tab="rock">岩石</button><button class="tab" data-tab="metal">金属</button><button class="tab" data-tab="gem">宝石</button></div><div class="panel-body" style="padding:12px 0"><div class="resource-list" id="inventoryResources"></div><div class="footer-note">設置モードでは、ここで選択したブロックをフィールドに配置できます。</div></div></div></div>
+<div class="drawer" id="drawer"><div class="drawer-card"><div class="drawer-head"><strong id="inventoryTitle" style="font-size:18px">インベントリ</strong><button id="closeInventory">閉じる ✕</button></div><div class="inventory-tabs" id="tabs"><button class="tab active" data-tab="all">すべて</button><button class="tab" data-tab="terrain">地層</button><button class="tab" data-tab="rock">岩石</button><button class="tab" data-tab="metal">金属</button><button class="tab" data-tab="gem">宝石</button><button class="tab" data-tab="nature">自然</button></div><div class="panel-body" style="padding:12px 0"><div class="resource-list" id="inventoryResources"></div><div class="footer-note">設置モードでは、ここで選択したブロックをフィールドに配置できます。</div></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
 (() => {
@@ -85,12 +85,19 @@ const TYPES = [
 {id:"amethyst",name:"アメジスト",nameEn:"Amethyst",group:"gem",color:"#a77ae8",symbol:"✦",weight:.7},
 {id:"sapphire",name:"サファイア",nameEn:"Sapphire",group:"gem",color:"#4f83e8",symbol:"✦",weight:.6},
 {id:"topaz",name:"トパーズ",nameEn:"Topaz",group:"gem",color:"#e9ae49",symbol:"✦",weight:.7},
-{id:"aquamarine",name:"アクアマリン",nameEn:"Aquamarine",group:"gem",color:"#69c9d8",symbol:"✦",weight:.7}
+{id:"aquamarine",name:"アクアマリン",nameEn:"Aquamarine",group:"gem",color:"#69c9d8",symbol:"✦",weight:.7},
+{id:"grass_block",name:"草ブロック",nameEn:"Grass Block",group:"nature",color:"#65a94b",symbol:"▪",weight:0},
+{id:"water",name:"水",nameEn:"Water",group:"nature",color:"#4baddb",symbol:"≈",weight:0},
+{id:"flower",name:"花",nameEn:"Flower",group:"nature",color:"#e58baf",symbol:"✿",weight:0},
+{id:"tall_grass",name:"草むら",nameEn:"Tall Grass",group:"nature",color:"#6fba58",symbol:"♣",weight:0},
+{id:"leaves",name:"葉ブロック",nameEn:"Leaves",group:"nature",color:"#397b45",symbol:"♣",weight:0},
+{id:"wood",name:"木材",nameEn:"Wood",group:"nature",color:"#93623b",symbol:"▥",weight:0}
 ];
 const W=300,H=300,EMPTY=null;
 let world=[],baseWorld=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",visibility=[],activeWorld="underworld";
 let language=localStorage.getItem("stoneblock-language")==="en"?"en":"ja";
 const REVEAL_RADIUS=5;
+const LIFE_SURFACE_Y=116;
 function updateVisibility(){
  visibility=Array.from({length:H},()=>Array(W).fill(99));
  const queue=new Int32Array(W*H),dist=new Int8Array(W*H);dist.fill(99);let head=0,tail=0;
@@ -102,8 +109,8 @@ function updateVisibility(){
 }
 const $=id=>document.getElementById(id);
 const TEXT={
- ja:{tagline:"石の世界を掘り進めよう",underworld:"アンダーワールド",life:"ライフワールド",toLife:"ライフワールドへ",toUnderworld:"アンダーワールドへ",inventory:"インベントリ",mined:"採掘数",total:"所持資源",field:"地下フィールド",mine:"⛏ 採掘 ON",place:"▦ 採掘 OFF（設置）",hintMine:"空気に接しているブロックをタップして1マス採掘",hintPlace:"採掘OFF：インベントリからブロックを選び、空気マスをタップして1マス設置",seed:"SEED",random:"ランダム生成",apply:"指定シードで生成",map:"マップ",resources:"資源一覧",openInventory:"インベントリを開く",prev:"← 前へ",next:"次へ →",how:"遊び方",tabs:["すべて","地層","岩石","金属","宝石"],close:"閉じる ✕",footer:"設置モードでは、ここで選択したブロックをフィールドに配置できます。",instructions:["空洞に接しているブロックをタップすると、その1マスだけ採掘。","採掘ONならタップした1マスだけ回収。","設置OFFなら選択した資源を1マスずつ配置。","掘るほど新しい資源層に到達します。"]},
- en:{tagline:"Dig your way through the stone world",underworld:"Underworld",life:"Life World",toLife:"Go to Life World",toUnderworld:"Go to Underworld",inventory:"Inventory",mined:"Blocks mined",total:"Resources",field:"Underground",mine:"⛏ Mining ON",place:"▦ Mining OFF (Place)",hintMine:"Tap a block exposed to air to mine one tile",hintPlace:"Mining OFF: choose a block in Inventory, then tap an empty tile to place one",seed:"SEED",random:"Generate random",apply:"Generate from seed",map:"Map",resources:"Resources",openInventory:"Open inventory",prev:"← Previous",next:"Next →",how:"How to play",tabs:["All","Terrain","Rocks","Metals","Gems"],close:"Close ✕",footer:"In placement mode, choose a block here and place it in the field.",instructions:["Tap a block touching an air space to mine that single tile.","When Mining is ON, only the tapped tile is collected.","When Mining is OFF, place the selected resource one tile at a time.","Dig deeper to discover new resource layers."]}
+ ja:{tagline:"石の世界を掘り進めよう",underworld:"アンダーワールド",life:"ライフワールド",toLife:"ライフワールドへ",toUnderworld:"アンダーワールドへ",inventory:"インベントリ",mined:"採掘数",total:"所持資源",field:"地下フィールド",mine:"⛏ 採掘 ON",place:"▦ 採掘 OFF（設置）",hintMine:"空気に接しているブロックをタップして1マス採掘",hintPlace:"採掘OFF：インベントリからブロックを選び、空気マスをタップして1マス設置",seed:"SEED",random:"ランダム生成",apply:"指定シードで生成",map:"マップ",resources:"資源一覧",openInventory:"インベントリを開く",prev:"← 前へ",next:"次へ →",how:"遊び方",tabs:["すべて","地層","岩石","金属","宝石","自然"],close:"閉じる ✕",footer:"設置モードでは、ここで選択したブロックをフィールドに配置できます。",instructions:["空洞に接しているブロックをタップすると、その1マスだけ採掘。","採掘ONならタップした1マスだけ回収。","設置OFFなら選択した資源を1マスずつ配置。","掘るほど新しい資源層に到達します。"]},
+ en:{tagline:"Dig your way through the stone world",underworld:"Underworld",life:"Life World",toLife:"Go to Life World",toUnderworld:"Go to Underworld",inventory:"Inventory",mined:"Blocks mined",total:"Resources",field:"Underground",mine:"⛏ Mining ON",place:"▦ Mining OFF (Place)",hintMine:"Tap a block exposed to air to mine one tile",hintPlace:"Mining OFF: choose a block in Inventory, then tap an empty tile to place one",seed:"SEED",random:"Generate random",apply:"Generate from seed",map:"Map",resources:"Resources",openInventory:"Open inventory",prev:"← Previous",next:"Next →",how:"How to play",tabs:["All","Terrain","Rocks","Metals","Gems","Nature"],close:"Close ✕",footer:"In placement mode, choose a block here and place it in the field.",instructions:["Tap a block touching an air space to mine that single tile.","When Mining is ON, only the tapped tile is collected.","When Mining is OFF, place the selected resource one tile at a time.","Dig deeper to discover new resource layers."]}
 };
 function applyLanguage(){
  const t=TEXT[language],en=language==="en";
@@ -221,17 +228,41 @@ function generate(seed=null){
 function isAir(x,y){return x<0||y<0||x>=W||y>=H||world[y][x]===EMPTY;}
 function adjacentToSolid(x,y){return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>x+dx>=0&&y+dy>=0&&x+dx<W&&y+dy<H&&world[y+dy][x+dx]!==EMPTY);}
 function exposed(x,y){if(isAir(x,y))return false;return isAir(x+1,y)||isAir(x-1,y)||isAir(x,y+1)||isAir(x,y-1);}
+function drawLifeBackdrop(ctx,sx,sy,vw,vh,cell){
+ const surface=LIFE_SURFACE_Y*cell;
+ ctx.fillStyle="#9ed9ef";ctx.fillRect(0,0,vw,vh);
+ const groundY=surface-sy;
+ if(groundY<vh){
+  ctx.fillStyle="#75b94f";ctx.fillRect(0,Math.max(0,groundY),vw,vh-Math.max(0,groundY));
+  ctx.fillStyle="#8b633f";ctx.fillRect(0,Math.max(0,groundY)+7,vw,Math.max(0,vh-Math.max(0,groundY)-7));
+  ctx.fillStyle="#745035";ctx.fillRect(0,Math.max(0,groundY)+cell,vw,Math.max(0,vh-Math.max(0,groundY)-cell));
+ }
+ const x0=Math.max(0,Math.floor(sx/cell)-1),x1=Math.min(W,Math.ceil((sx+vw)/cell)+1);
+ for(let x=x0;x<x1;x++){
+  const px=x*cell-sx,noise=hash2(x,912);
+  if(noise>.91&&groundY>-12&&groundY<vh+12){
+   const w=cell*(1.2+hash2(x,913)*2.4),h=5+hash2(x,914)*5;
+   ctx.fillStyle="#4baddb";ctx.beginPath();ctx.ellipse(px+cell*.5,groundY+2,w*.5,h,0,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="#a9e8f4";ctx.fillRect(px+cell*.5-w*.18,groundY,Math.max(3,w*.22),2);
+  }
+  if(noise<.58&&groundY>-12&&groundY<vh+12){
+   ctx.strokeStyle="#4e9d3d";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px+cell*.5,groundY+2);ctx.lineTo(px+cell*.34,groundY-4-hash2(x,915)*5);ctx.moveTo(px+cell*.5,groundY+2);ctx.lineTo(px+cell*.66,groundY-3-hash2(x,916)*5);ctx.stroke();
+  }
+ }
+}
 function drawWorld(){
  const canvas=$("world"),wrap=document.querySelector(".world-wrap"),ctx=canvas.getContext("2d");
  const dpr=Math.min(window.devicePixelRatio||1,2),vw=wrap.clientWidth,vh=wrap.clientHeight;
  canvas.width=Math.floor(vw*dpr);canvas.height=Math.floor(vh*dpr);canvas.style.width=vw+"px";canvas.style.height=vh+"px";
- ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle="#090d0e";ctx.fillRect(0,0,vw,vh);
+ ctx.setTransform(dpr,0,0,dpr,0,0);
  const cell=36,sx=wrap.scrollLeft,sy=wrap.scrollTop;
+ if(activeWorld==="life")drawLifeBackdrop(ctx,sx,sy,vw,vh,cell);else{ctx.fillStyle="#090d0e";ctx.fillRect(0,0,vw,vh);}
  const x0=Math.max(0,Math.floor(sx/cell)),y0=Math.max(0,Math.floor(sy/cell));
  const x1=Math.min(W,Math.ceil((sx+vw)/cell)),y1=Math.min(H,Math.ceil((sy+vh)/cell));
  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
   const id=world[y][x],px=x*cell-sx,py=y*cell-sy,distance=visibility[y]?.[x]??99;
-  if(distance>REVEAL_RADIUS||id===EMPTY)continue;
+  if(id===EMPTY)continue;
+  if(activeWorld==="underworld"&&distance>REVEAL_RADIUS)continue;
   const t=typeById(id),darkness=Math.max(0,Math.min(.96,(distance-1)/5));ctx.globalAlpha=1-darkness;ctx.fillStyle=t.color;ctx.fillRect(px,py,cell,cell);
   // Fine, irregular mineral/soil grain: subtle pixel clusters, no tile outlines.
   let seed=((x*374761393)^(y*668265263)^(id.length*2246822519))>>>0;
@@ -284,7 +315,7 @@ function setMode(next){
 }
 function toast(s){const e=$("toast");e.textContent=s;e.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove("show"),1700);}
 $("mineToggle").onclick=()=>{setMode(mode==="mine"?"place":"mine");saveWorld(false);};
-$("worldToggle").onclick=()=>{saveWorld(false);saveInventory();const wrap=document.querySelector(".world-wrap");activeWorld=activeWorld==="underworld"?"life":"underworld";loadInventory();const loaded=loadWorld(false);if(!loaded){if(activeWorld==="life"){worldSeed=0;baseWorld=emptyWorld();world=baseWorld.map(row=>row.slice());mined=0;selected="dirt";setMode("place");}else{generate();setMode("mine");}wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;saveWorld(false);}applyLanguage();render();toast(activeWorld==="life"?"ライフワールドに移動しました":"アンダーワールドに移動しました");};
+$("worldToggle").onclick=()=>{saveWorld(false);saveInventory();const wrap=document.querySelector(".world-wrap");activeWorld=activeWorld==="underworld"?"life":"underworld";loadInventory();const loaded=loadWorld(false);if(!loaded){if(activeWorld==="life"){worldSeed=0;baseWorld=emptyWorld();world=baseWorld.map(row=>row.slice());mined=0;selected="grass_block";setMode("place");}else{generate();setMode("mine");}wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=activeWorld==="life"?LIFE_SURFACE_Y*36-16*36:(wrap.scrollHeight-wrap.clientHeight)/2;saveWorld(false);}applyLanguage();render();toast(activeWorld==="life"?"ライフワールドに移動しました":"アンダーワールドに移動しました");};
 $("languageToggle").onclick=()=>{language=language==="ja"?"en":"ja";localStorage.setItem("stoneblock-language",language);applyLanguage();};
 $("prevPage").onclick=()=>{page=Math.max(0,page-1);renderResources();};$("nextPage").onclick=()=>{page=Math.min(Math.ceil(TYPES.length/7)-1,page+1);renderResources();};
 $("openInventory").onclick=$("openInventoryMobile").onclick=()=>{$("drawer").classList.add("open");};
@@ -294,9 +325,9 @@ $("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if
 $("randomWorld").onclick=()=>{if(activeWorld==="life"){toast("ライフワールドは建築専用です");return;}if(confirm("ランダムなシード値で新しい地形を生成しますか？インベントリは保持されます。")){generate();saveWorld(false);saveInventory();toast("新しいワールド：seed "+worldSeed);}};
 $("applySeed").onclick=()=>{if(activeWorld==="life"){toast("ライフワールドは建築専用です");return;}const raw=$("seedInput").value.trim(),seed=Number(raw);if(raw===""||!Number.isSafeInteger(seed)){toast("シード値は整数で入力してください");return;}if(confirm("シード "+seed+" で新しい地形を生成しますか？インベントリは保持されます。")){generate(seed);saveWorld(false);saveInventory();toast("指定シードで生成しました："+worldSeed);}};
 loadInventory();
- const hasSavedWorld=loadWorld(false);if(!hasSavedWorld){if(activeWorld==="life"){worldSeed=0;baseWorld=emptyWorld();world=baseWorld.map(row=>row.slice());mined=0;mode="place";selected="dirt";updateVisibility();setMode("place");}else{generate();}saveWorld(false);}
+ const hasSavedWorld=loadWorld(false);if(!hasSavedWorld){if(activeWorld==="life"){worldSeed=0;baseWorld=emptyWorld();world=baseWorld.map(row=>row.slice());mined=0;mode="place";selected="grass_block";updateVisibility();setMode("place");}else{generate();}saveWorld(false);}
  const wrap=document.querySelector(".world-wrap");
- if(!hasSavedWorld){wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;}
+ if(!hasSavedWorld){wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=activeWorld==="life"?LIFE_SURFACE_Y*36-16*36:(wrap.scrollHeight-wrap.clientHeight)/2;}
  let saveScrollTimer;wrap.addEventListener("scroll",()=>{drawWorld();drawMinimap();clearTimeout(saveScrollTimer);saveScrollTimer=setTimeout(()=>saveWorld(false),500);},{passive:true});
  $("minimap").addEventListener("click",e=>{const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W*36,y=(e.clientY-r.top)/r.height*H*36;wrap.scrollLeft=Math.max(0,x-wrap.clientWidth/2);wrap.scrollTop=Math.max(0,y-wrap.clientHeight/2);drawWorld();drawMinimap();});
  $("world").addEventListener("click",e=>{
