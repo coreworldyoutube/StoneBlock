@@ -21,5 +21,18 @@
   "hintMine": "Mine one block touching air",
   "hintPlace": "Select a block and click an empty adjacent tile to place one",
   "conveyorHint": "Conveyor placement: click an empty tile to place",
-  "distributeHint": "Distribute ON: click a conveyor to load the selected item"
+  "distributeHint": "Distribute ON: click a conveyor to load the selected item",
+  "brandSubtitle": "Dig deeper into a world of stone",
+  "fieldTitle": "Underground Field",
+  "resourceTitle": "Resources",
+  "howtoTitle": "How to Play",
+  "minedLabel": "Blocks mined",
+  "totalLabel": "Resources",
+  "inventoryNote": "In placement mode, choose a block here and place it in the field.",
+  "quickNote": "Use the arrow buttons to switch resource pages.",
+  "howto1": "Mine one block at a time when it touches an air tile.",
+  "howto2": "Mining ON collects the clicked block.",
+  "howto3": "Mining OFF places one selected block at a time.",
+  "howto4": "Dig deeper to discover new resource layers.",
+  "furnace": "Build Furnace"
 }
