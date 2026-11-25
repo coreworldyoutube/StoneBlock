@@ -107,7 +107,7 @@ let world=[],baseWorld=[],inventory={},mode="mine",selected="dirt",mined=0,page=
 let language=localStorage.getItem("stoneblock-language")==="en"?"en":"ja";
 const REVEAL_RADIUS=5;
 const LIFE_SURFACE_Y=116;
-const BUILD_COST={conveyor:{stone:1},miner:{iron:5,stone:8},furnace:{stone:8,coal:2},storage:{wood:8},road:{stone:1},house:{wood:12,stone:4},farm:{wood:3,dirt:4}};
+const BUILD_COST={conveyor:{stone:1},miner:{iron:5,stone:8},furnace:{stone:8,coal:2},storage:{wood:8},road:{stone:1},house:{wood:12,stone:4},farm:{wood:3,stone:2}};
 function updateVisibility(){
  visibility=Array.from({length:H},()=>Array(W).fill(99));
  const queue=new Int32Array(W*H),dist=new Int8Array(W*H);dist.fill(99);let head=0,tail=0;
