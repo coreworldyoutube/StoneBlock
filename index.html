@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>StoneBlock — 地下採掘</title>
+<title>StoneBlock v0.3.0-dev — 地下採掘</title>
 <style>
 :root{color-scheme:dark;--bg:#101315;--panel:#1a2022;--panel2:#252d2f;--line:#343d3f;--text:#e4e9e7;--muted:#929e99;--accent:#a6b5b2;--good:#8fba9a}
 *{box-sizing:border-box}html{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg)}body{position:fixed;inset:0;margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}main,main>section{overscroll-behavior:none}
@@ -14,6 +14,8 @@ main{height:calc(100dvh - 54px);width:100%;margin:0;padding:0;display:block;posi
 .panel{background:#1a2022;border:1px solid #303a3b;border-radius:5px;box-shadow:none;overflow:hidden}.panel-head{padding:9px 11px;border-bottom:1px solid #303a3b;display:flex;justify-content:space-between;align-items:center;gap:8px}.panel-body{padding:10px}
 .stats{display:flex;gap:6px}.stat{background:#202729;border:1px solid #333e40;padding:5px 9px;border-radius:3px;color:var(--muted);font-size:11px}.stat b{color:var(--text);margin-left:4px}
 main>section{height:100%;border:0!important;border-radius:0!important;background:transparent!important}
+/* Keep .world-wrap as the sticky canvas scroll container. */
+main>section.panel{overflow:visible}
 main>section>.panel-head{position:absolute;top:12px;left:14px;z-index:3;border:0;background:#171d1fdc;border-radius:4px;padding:7px 9px}
 main>section>.panel-body{position:absolute;top:12px;right:248px;z-index:3;padding:0;background:#171d1fdc;border-radius:4px}
 main>section>.panel-body .subtitle{display:none}
@@ -28,6 +30,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
 .drawer{display:none;position:fixed;inset:0;background:#0009;z-index:10;justify-content:flex-end}.drawer.open{display:flex}.drawer-card{background:#1a2022;width:min(420px,92vw);height:100%;padding:16px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;border-left:1px solid #3a4546}.drawer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .footer-note{color:var(--muted);font-size:11px;margin-top:8px}.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#252e30;border:1px solid #566363;padding:8px 13px;border-radius:4px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}.toast.show{opacity:1}
 .mobile-resource{display:none}
+.version{font-size:10px;color:var(--muted);letter-spacing:.04em;margin-left:8px}
 @media(max-width:850px){
  header{height:48px;padding:0 9px}.brand{font-size:15px}.subtitle{display:none}.stats .stat:first-child{display:none}
  main{height:calc(100dvh - 48px)}
@@ -39,10 +42,10 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
 </style>
 </head>
 <body>
-<header><div><div class="brand"><span>STONE</span>BLOCK</div><div class="subtitle" id="brandSubtitle">石の世界を掘り進めよう</div></div><div class="mobile-resource"><span class="stat">所持 <b id="totalMobile">0</b></span><button id="openInventoryMobile">インベントリ</button></div><div class="stats"><div class="stat">採掘数 <b id="mined">0</b></div><div class="stat">所持資源 <b id="total">0</b></div></div></header>
+<header><div><div class="brand"><span>STONE</span>BLOCK <span id="gameVersion" class="version">v0.3.0-dev</span></div><div class="subtitle" id="brandSubtitle">石の世界を掘り進めよう</div></div><div class="mobile-resource"><span class="stat">所持 <b id="totalMobile">0</b></span><button id="openInventoryMobile">インベントリ</button></div><div class="stats"><div class="stat">採掘数 <b id="mined">0</b></div><div class="stat">所持資源 <b id="total">0</b></div></div></header>
 <main>
 <section class="panel">
- <div class="panel-head"><strong id="fieldTitle">地下フィールド</strong><div class="modebar"><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button><button id="buildConveyor">コンベアを作る</button><button id="buildFurnace">かまどを作る</button><button id="distribute">配る：OFF</button><label style="font-size:11px;color:#aab5b1">方向 <select id="beltDirection"><option value="right">→</option><option value="down">↓</option><option value="left">←</option><option value="up">↑</option></select></label><label style="font-size:11px;color:#aab5b1">言語 <select id="language"><option value="ja">日本語</option><option value="en">English</option></select></label></div></div>
+ <div class="panel-head"><strong id="fieldTitle">地下フィールド</strong><div class="modebar"><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button><label style="font-size:11px;color:#aab5b1">言語 <select id="language"><option value="ja">日本語</option><option value="en">English</option></select></label></div></div>
  <div class="panel-body" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
   <div class="subtitle" id="hint">空気に接しているブロックをタップして1マス採掘</div>
   <div class="modebar"><label for="seedInput" class="subtitle">SEED</label><input id="seedInput" type="number" step="1" inputmode="numeric" placeholder="シード値" style="width:116px;max-width:116px"><button id="randomWorld">ランダム生成</button><button id="applySeed">指定シードで生成</button><button id="resetLocalData" type="button">保存データを初期化</button></div>
@@ -61,9 +64,11 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
 (() => {
 "use strict";
 let TYPES = [];
+const GAME_VERSION="0.3.0-dev";
+const SAVE_FORMAT_VERSION=6;
 const W=300,H=300,EMPTY=null;
 let world=[],baseWorld=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",visibility=[];
-let conveyors={},furnaces={},toolMode="none",distributeMode=false,beltDirection="right",language="ja",LANG={},MACHINE_TYPES=[];
+let language="ja",LANG={};
  let cameraX=0,cameraY=0;
 const REVEAL_RADIUS=5,RENDER_MARGIN=10,RENDER_MARGIN_PX=RENDER_MARGIN*36;
 function updateVisibility(){
@@ -83,10 +88,10 @@ const SAVE_KEY="stoneblock-world-v1";
 const INVENTORY_KEY="stoneblock-inventory-v1";
 function saveInventory(){try{localStorage.setItem(INVENTORY_KEY,JSON.stringify(inventory));return true;}catch(e){toast("インベントリを保存できませんでした");return false;}}
 function loadInventory(){try{const raw=localStorage.getItem(INVENTORY_KEY);const saved=raw?JSON.parse(raw):null;inventory={};for(const t of TYPES)inventory[t.id]=Number(saved?.[t.id])||0;}catch(e){inventory={};for(const t of TYPES)inventory[t.id]=0;}}
-function saveWorld(show=true){try{const changes=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(world[y][x]!==baseWorld[y][x])changes.push([i,world[y][x]]);}const data={version:6,seed:worldSeed,changes,mined,selected,mode,conveyors,furnaces,cameraX,cameraY};localStorage.setItem(SAVE_KEY,JSON.stringify(data));if(show)toast("ワールドを保存しました（変更箇所 "+changes.length+"）");return true;}catch(e){toast("保存できませんでした（容量・ブラウザ設定を確認）");return false;}}
+function saveWorld(show=true){try{const changes=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(world[y][x]!==baseWorld[y][x])changes.push([i,world[y][x]]);}const data={version:SAVE_FORMAT_VERSION,seed:worldSeed,changes,mined,selected,mode,cameraX,cameraY};localStorage.setItem(SAVE_KEY,JSON.stringify(data));if(show)toast("ワールドを保存しました（変更箇所 "+changes.length+"）");return true;}catch(e){toast("保存できませんでした（容量・ブラウザ設定を確認）");return false;}}
 function loadWorld(show=true){try{
  const raw=localStorage.getItem(SAVE_KEY);if(!raw){if(show)toast("保存データがありません");return false;}
- const d=JSON.parse(raw);if(![1,2,3,4,5,6].includes(d.version))throw new Error("invalid save");
+ const d=JSON.parse(raw);if(![1,2,3,4,5,SAVE_FORMAT_VERSION].includes(d.version))throw new Error("invalid save");
  worldSeed=Number.isSafeInteger(d.seed)?d.seed:0;baseWorld=generateBase();world=baseWorld.map(row=>row.slice());
  if(d.version===1){
   if(!Array.isArray(d.world)||d.world.length!==H||d.world.some(row=>!Array.isArray(row)||row.length!==W))throw new Error("invalid legacy save");
@@ -96,7 +101,7 @@ function loadWorld(show=true){try{
   for(const change of d.changes){if(!Array.isArray(change)||change.length!==2)continue;const i=change[0],id=change[1];if(!Number.isInteger(i)||i<0||i>=W*H||(id!==null&&!typeById(id)))continue;world[Math.floor(i/W)][i%W]=id;}
  }
  if(d.version<4&&!localStorage.getItem(INVENTORY_KEY)){inventory={};for(const t of TYPES)inventory[t.id]=Number(d.inventory?.[t.id])||0;saveInventory();}
- mined=Number(d.mined)||0;selected=typeById(d.selected)?d.selected:"dirt";mode=d.mode==="place"?"place":"mine";conveyors=d.version>=5&&d.conveyors&&typeof d.conveyors==="object"?d.conveyors:{};furnaces=d.version>=5&&d.furnaces&&typeof d.furnaces==="object"?d.furnaces:{};
+ mined=Number(d.mined)||0;selected=typeById(d.selected)?d.selected:"dirt";mode=d.mode==="place"?"place":"mine";
  updateVisibility();setMode(mode);render();$("seedInput").value=String(worldSeed);
  cameraX=Number.isFinite(d.cameraX)?d.cameraX:(Number(d.scrollLeft)||0);cameraY=Number.isFinite(d.cameraY)?d.cameraY:(Number(d.scrollTop)||0);clampCamera();
  drawWorld();drawMinimap();if(show)toast("保存したワールドを読み込みました");return true;
@@ -199,23 +204,8 @@ function drawWorld(){
   }
   ctx.globalAlpha=1;
  }
- drawMachines(ctx,sx-RENDER_MARGIN_PX,sy-RENDER_MARGIN_PX,cell,x0,y0,x1,y1);
+ 
 }
-function drawMachines(ctx,sx,sy,cell,x0,y0,x1,y1){
- for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const key=String(y*W+x),px=x*cell-sx,py=y*cell-sy;
-  if(conveyors[key]){const b=conveyors[key];ctx.globalAlpha=b.enabled===false?.35:1;ctx.fillStyle="#394744";ctx.fillRect(px+4,py+4,cell-8,cell-8);ctx.strokeStyle="#b6c5bd";ctx.lineWidth=2;ctx.beginPath();
-   if(b.dir==="right"){ctx.moveTo(px+7,py+18);ctx.lineTo(px+29,py+18);ctx.moveTo(px+23,py+12);ctx.lineTo(px+29,py+18);ctx.lineTo(px+23,py+24);}
-   if(b.dir==="left"){ctx.moveTo(px+29,py+18);ctx.lineTo(px+7,py+18);ctx.moveTo(px+13,py+12);ctx.lineTo(px+7,py+18);ctx.lineTo(px+13,py+24);}
-   if(b.dir==="down"){ctx.moveTo(px+18,py+7);ctx.lineTo(px+18,py+29);ctx.moveTo(px+12,py+23);ctx.lineTo(px+18,py+29);ctx.lineTo(px+24,py+23);}
-   if(b.dir==="up"){ctx.moveTo(px+18,py+29);ctx.lineTo(px+18,py+7);ctx.moveTo(px+12,py+13);ctx.lineTo(px+18,py+7);ctx.lineTo(px+24,py+13);}ctx.stroke();ctx.globalAlpha=1;
-   for(let lane=0;lane<2;lane++)for(let slot=0;slot<4;slot++){const item=b.lanes?.[lane]?.[slot];if(!item)continue;const along=slot*6+5,side=lane===0?11:23;let ix=px+along,iy=py+side;if(b.dir==="left")ix=px+31-along;if(b.dir==="down"){ix=px+side;iy=py+along;}if(b.dir==="up"){ix=px+side;iy=py+31-along;}ctx.fillStyle=typeById(item)?.color||"#fff";ctx.fillRect(ix-2,iy-2,4,4);}
-  }
-  if(furnaces[key]){const f=furnaces[key];ctx.globalAlpha=f.enabled===false?.35:1;ctx.fillStyle="#704a38";ctx.fillRect(px+3,py+3,cell-6,cell-6);ctx.fillStyle="#e68a48";ctx.fillRect(px+10,py+10,cell-20,cell-20);ctx.fillStyle="#ffe0a3";ctx.fillRect(px+14,py+14,8,8);ctx.globalAlpha=1;}
- }
-}
-function nextBeltCell(x,y,d){if(d==="right")x++;else if(d==="left")x--;else if(d==="up")y--;else y++;return x<0||y<0||x>=W||y>=H?null:String(y*W+x);}
-function acceptAtFurnace(key,item){const f=furnaces[key];if(!f||f.enabled===false)return false;if(item==="coal"||item==="peat")f.fuel=(f.fuel||0)+(item==="coal"?8:4);else if(item==="iron"||item==="copper")f.ore=(f.ore||[]).concat(item);while((f.fuel||0)>0&&(f.ore||[]).length){const ore=f.ore.shift();f.fuel--;const out=ore+"_ingot";inventory[out]=(inventory[out]||0)+1;}return true;}
-function conveyorTick(){let changed=false;for(const key of Object.keys(conveyors)){const b=conveyors[key];if(b.enabled===false)continue;const i=Number(key),x=i%W,y=Math.floor(i/W);if(!Array.isArray(b.lanes))b.lanes=[Array(4).fill(null),Array(4).fill(null)];for(let lane=0;lane<2;lane++){const a=b.lanes[lane];for(let s=3;s>=0;s--){if(!a[s])continue;if(s<3){if(!a[s+1]){a[s+1]=a[s];a[s]=null;changed=true;}}else{const next=nextBeltCell(x,y,b.dir);if(next&&conveyors[next]&&conveyors[next].dir===b.dir){const dest=conveyors[next];if(!Array.isArray(dest.lanes))dest.lanes=[Array(4).fill(null),Array(4).fill(null)];if(!dest.lanes[lane][0]){dest.lanes[lane][0]=a[s];a[s]=null;changed=true;}}else if(next&&furnaces[next]&&acceptAtFurnace(next,a[s])){a[s]=null;changed=true;}}}}}if(changed){render();saveWorld(false);saveInventory();}}
 function clampCamera(){const wrap=document.querySelector(".world-wrap");const maxX=Math.max(0,W*36-wrap.clientWidth),maxY=Math.max(0,H*36-wrap.clientHeight);cameraX=Math.max(0,Math.min(maxX,cameraX));cameraY=Math.max(0,Math.min(maxY,cameraY));const left=cameraX+RENDER_MARGIN_PX,top=cameraY+RENDER_MARGIN_PX;if(wrap.scrollLeft!==left)wrap.scrollLeft=left;if(wrap.scrollTop!==top)wrap.scrollTop=top;}
  function drawMinimap(){const c=$("minimap"),ctx=c.getContext("2d"),sx=c.width/W,sy=c.height/H;ctx.fillStyle="#090d0e";ctx.fillRect(0,0,c.width,c.height);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=visibility[y]?.[x]??99;if(d>REVEAL_RADIUS||world[y][x]===EMPTY)continue;ctx.globalAlpha=1-Math.max(0,(d-1)/5);ctx.fillStyle=typeById(world[y][x]).color;ctx.fillRect(x*sx,y*sy,Math.ceil(sx),Math.ceil(sy));}ctx.globalAlpha=1;const wrap=document.querySelector(".world-wrap"),cell=36;ctx.strokeStyle="#f0f3f2";ctx.lineWidth=1;ctx.strokeRect(cameraX/(W*cell)*c.width,cameraY/(H*cell)*c.height,wrap.clientWidth/(W*cell)*c.width,wrap.clientHeight/(H*cell)*c.height);}
 function render(){
@@ -223,13 +213,8 @@ function render(){
  $("mined").textContent=mined;const total=Object.values(inventory).reduce((a,b)=>a+b,0);$("total").textContent=total;$("totalMobile").textContent=total;
  renderResources();
 }
-function interact(x,y){const key=String(y*W+x);
- if(toolMode==="conveyor"){if(!isAir(x,y)){toast("コンベアは空気マスに設置してください");return;}conveyors[key]={dir:beltDirection,enabled:true,lanes:[Array(4).fill(null),Array(4).fill(null)]};toolMode="none";render();saveWorld(false);toast("コンベアを設置しました");return;}
- if(toolMode==="furnace"){if(!isAir(x,y)){toast("かまどは空気マスに設置してください");return;}furnaces[key]={enabled:true,fuel:0,ore:[]};toolMode="none";render();saveWorld(false);toast("かまどを設置しました");return;}
- if(distributeMode&&conveyors[key]){const b=conveyors[key];if(inventory[selected]<1){toast("選択中のアイテムがありません");return;}for(let lane=0;lane<2;lane++){if(!b.lanes[lane][0]){b.lanes[lane][0]=selected;inventory[selected]--;render();saveInventory();saveWorld(false);return;}}toast("コンベアの入口がいっぱいです");return;}
- if(conveyors[key]){conveyors[key].enabled=conveyors[key].enabled===false;render();saveWorld(false);toast("コンベア："+(conveyors[key].enabled?"ON（稼働）":"OFF（停止）"));return;}
- if(furnaces[key]){const f=furnaces[key];f.enabled=f.enabled===false;render();saveWorld(false);toast("かまど："+(f.enabled?"ON（稼働）":"OFF（停止）")+" / 燃料 "+(f.fuel||0)+" / 鉱石 "+(f.ore||[]).length);return;}
- if(mode==="mine"){
+function interact(x,y){
+  if(mode==="mine"){
   if(!exposed(x,y)){toast("このブロックはまだ空気に接していません");return;}
   const id=world[y][x];
   if(id===EMPTY)return;
@@ -258,25 +243,31 @@ function setMode(next){
  $("hint").textContent=mode==="mine"?"空気に接しているブロックをタップして採掘":"採掘OFF：インベントリからブロックを選び、空気マスをタップして1マス設置";render();
 }
 function tr(k){return LANG[k]||k;}
-function applyLanguage(){$("language").value=language;$("mineToggle").textContent="⛏ "+tr(mode==="mine"?"mine":"place");$("buildConveyor").textContent=(language==="en"?"Conveyor placement: ":"コンベア設置：")+(toolMode==="conveyor"?"ON":"OFF");$("buildConveyor").classList.toggle("active",toolMode==="conveyor");$("buildFurnace").textContent=(language==="en"?"Furnace placement: ":"かまど設置：")+(toolMode==="furnace"?"ON":"OFF");$("buildFurnace").classList.toggle("active",toolMode==="furnace");$("beltDirection").previousElementSibling.textContent=tr("direction")+" ";$("distribute").textContent=language==="en"?"Distribute: "+(distributeMode?"ON":"OFF"):"配る："+(distributeMode?"ON":"OFF");$("distribute").classList.toggle("active",distributeMode);$("randomWorld").textContent=tr("random");$("applySeed").textContent=tr("applySeed");$("openInventory").textContent=tr("inventory");$("openInventoryMobile").textContent=tr("inventory");$("closeInventory").textContent=tr("close")+" ✕";$("tabs").querySelectorAll("[data-tab]").forEach(b=>b.textContent=tr(b.dataset.tab));$("brandSubtitle").textContent=tr("brandSubtitle");$("fieldTitle").textContent=tr("fieldTitle");$("resourceTitle").textContent=tr("resourceTitle");$("howtoTitle").textContent=tr("howtoTitle");$("inventoryTitle").textContent=tr("inventory");$("quickNote").textContent=tr("quickNote");$("inventoryNote").textContent=tr("inventoryNote");for(let i=1;i<=4;i++)$("howto"+i).textContent=tr("howto"+i);$("hint").textContent=mode==="mine"?tr("hintMine"):mode==="place"?tr("hintPlace"):toolMode==="conveyor"?tr("conveyorHint"):tr("distributeHint");}
+function applyLanguage(){
+ $("language").value=language;
+ $("mineToggle").textContent="⛏ "+tr(mode==="mine"?"mine":"place");
+ $("randomWorld").textContent=tr("random");$("applySeed").textContent=tr("applySeed");
+ $("openInventory").textContent=tr("inventory");$("openInventoryMobile").textContent=tr("inventory");$("closeInventory").textContent=tr("close")+" ✕";
+ $("tabs").querySelectorAll("[data-tab]").forEach(b=>b.textContent=tr(b.dataset.tab));
+ $("brandSubtitle").textContent=tr("brandSubtitle");$("fieldTitle").textContent=tr("fieldTitle");$("resourceTitle").textContent=tr("resourceTitle");$("howtoTitle").textContent=tr("howtoTitle");$("inventoryTitle").textContent=tr("inventory");$("quickNote").textContent=tr("quickNote");$("inventoryNote").textContent=tr("inventoryNote");
+ for(let i=1;i<=4;i++)$("howto"+i).textContent=tr("howto"+i);
+ $("resetLocalData").textContent=tr("resetLocalData");$("gameVersion").textContent="v"+GAME_VERSION;
+ $("hint").textContent=mode==="mine"?tr("hintMine"):tr("hintPlace");
+}
 function toast(s){const e=$("toast");e.textContent=s;e.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove("show"),1700);}
 
  $("mineToggle").onclick=()=>{setMode(mode==="mine"?"place":"mine");applyLanguage();saveWorld(false);};
-$("buildConveyor").onclick=()=>{toolMode=toolMode==="conveyor"?"none":"conveyor";distributeMode=false;applyLanguage();toast(toolMode==="conveyor"?"コンベア設置 ON：空気マスをクリック":"コンベア設置 OFF");};
-$("buildFurnace").onclick=()=>{toolMode=toolMode==="furnace"?"none":"furnace";distributeMode=false;applyLanguage();toast(toolMode==="furnace"?"かまど設置 ON：空気マスをクリック":"かまど設置 OFF");};
-$("distribute").onclick=()=>{distributeMode=!distributeMode;toolMode="none";applyLanguage();toast(distributeMode?"配るモード ON：コンベアをクリック":"配るモード OFF");saveWorld(false);};
-$("beltDirection").onchange=e=>beltDirection=e.target.value;
 $("language").onchange=async e=>{language=e.target.value;try{const rr=await fetch("data/lang/"+language+".json");LANG=await rr.json();localStorage.setItem("stoneblock-language",language);applyLanguage();renderResources();}catch(err){toast("Language file could not be loaded");}};
 $("prevPage").onclick=()=>{page=Math.max(0,page-1);renderResources();};$("nextPage").onclick=()=>{page=Math.min(Math.ceil(TYPES.length/7)-1,page+1);renderResources();};
 $("openInventory").onclick=$("openInventoryMobile").onclick=()=>{$("drawer").classList.add("open");};
 $("closeInventory").onclick=()=> $("drawer").classList.remove("open");
 $("drawer").addEventListener("click",e=>{if(e.target===$("drawer"))$("drawer").classList.remove("open");});
 $("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;invTab=b.dataset.tab;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));renderResources();});
-$("randomWorld").onclick=()=>{if(confirm("ランダムなシード値で新しい地形を生成しますか？インベントリは保持されます。")){generate();saveWorld(false);saveInventory();toast("新しいワールド：seed "+worldSeed);}};
-$("applySeed").onclick=()=>{const raw=$("seedInput").value.trim(),seed=Number(raw);if(raw===""||!Number.isSafeInteger(seed)){toast("シード値は整数で入力してください");return;}if(confirm("シード "+seed+" で新しい地形を生成しますか？インベントリは保持されます。")){generate(seed);saveWorld(false);saveInventory();toast("指定シードで生成しました："+worldSeed);}};
-$("resetLocalData").onclick=()=>{if(!confirm("保存されたワールドとインベントリを初期化します。元に戻せません。実行しますか？"))return;localStorage.removeItem(SAVE_KEY);localStorage.removeItem(INVENTORY_KEY);location.reload();};
+$("randomWorld").onclick=()=>{if(confirm(tr("randomConfirm"))){generate();saveWorld(false);saveInventory();toast(tr("randomDone")+" "+worldSeed);}};
+$("applySeed").onclick=()=>{const raw=$("seedInput").value.trim(),seed=Number(raw);if(raw===""||!Number.isSafeInteger(seed)){toast(tr("seedInvalid"));return;}if(confirm(tr("seedConfirm")+" ("+seed+")")){generate(seed);saveWorld(false);saveInventory();toast(tr("seedDone")+" "+worldSeed);}};
+$("resetLocalData").onclick=()=>{if(!confirm(tr("resetConfirm")))return;localStorage.removeItem(SAVE_KEY);localStorage.removeItem(INVENTORY_KEY);location.reload();};
 async function boot(){
-const br=await fetch("data/blocks.json");if(!br.ok)throw Error("blocks.json load failed");TYPES=await br.json();const mr=await fetch("data/machines.json");if(!mr.ok)throw Error("machines.json load failed");MACHINE_TYPES=await mr.json();language=localStorage.getItem("stoneblock-language")||"ja";const lr=await fetch("data/lang/"+language+".json");LANG=await lr.json();loadInventory();
+const br=await fetch("data/blocks.json");if(!br.ok)throw Error("blocks.json load failed");TYPES=await br.json();language=localStorage.getItem("stoneblock-language")||"ja";const lr=await fetch("data/lang/"+language+".json");LANG=await lr.json();loadInventory();
  const hasSavedWorld=loadWorld(false);applyLanguage();if(!hasSavedWorld){generate();saveWorld(false);}
  const wrap=document.querySelector(".world-wrap");
 if(!hasSavedWorld){cameraX=(W*36-wrap.clientWidth)/2;cameraY=(H*36-wrap.clientHeight)/2;}
@@ -288,7 +279,7 @@ const canvas=$("world");
 canvas.addEventListener("click",e=>{const rect=wrap.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left+wrap.scrollLeft-RENDER_MARGIN_PX)/36),y=Math.floor((e.clientY-rect.top+wrap.scrollTop-RENDER_MARGIN_PX)/36);if(x>=0&&y>=0&&x<W&&y<H)interact(x,y);});
 window.addEventListener("keydown",e=>{if(["INPUT","SELECT","TEXTAREA"].includes(document.activeElement?.tagName))return;const step=e.shiftKey?180:54;let moved=true;if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a")cameraX-=step;else if(e.key==="ArrowRight"||e.key.toLowerCase()==="d")cameraX+=step;else if(e.key==="ArrowUp"||e.key.toLowerCase()==="w")cameraY-=step;else if(e.key==="ArrowDown"||e.key.toLowerCase()==="s")cameraY+=step;else moved=false;if(moved){e.preventDefault();clampCamera();render();saveWorld(false);}});
 window.addEventListener("resize",()=>{clampCamera();drawWorld();drawMinimap();});
-window.addEventListener("pagehide",()=>saveWorld(false));drawWorld();drawMinimap();setInterval(conveyorTick,350);
+window.addEventListener("pagehide",()=>saveWorld(false));drawWorld();drawMinimap();
 }
 boot().catch(error=>{console.error(error);toast("ゲームデータを読み込めませんでした");});
 })();
