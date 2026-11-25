@@ -88,7 +88,8 @@ const TYPES = [
 {id:"aquamarine",name:"アクアマリン",nameEn:"Aquamarine",group:"gem",color:"#69c9d8",symbol:"✦",weight:.7}
 ];
 const W=300,H=300,EMPTY=null;
-let world=[],baseWorld=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",visibility=[];\nlet language=localStorage.getItem("stoneblock-language")==="en"?"en":"ja";
+let world=[],baseWorld=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",visibility=[];
+let language=localStorage.getItem("stoneblock-language")==="en"?"en":"ja";
 const REVEAL_RADIUS=5;
 function updateVisibility(){
  visibility=Array.from({length:H},()=>Array(W).fill(99));
@@ -279,7 +280,7 @@ function renderResources(){
 }
 function setMode(next){
  mode=next;const toggle=$("mineToggle");toggle.textContent=mode==="mine"?"⛏ 採掘 ON":"▦ 採掘 OFF（設置）";toggle.classList.toggle("active",mode==="mine");toggle.classList.toggle("place",mode==="place");
- $("hint").textContent=mode==="mine"?"空気に接しているブロックをタップして採掘":"採掘OFF：インベントリからブロックを選び、空気マスをタップして1マス設置";render();
+ $("hint").textContent=mode==="mine"?TEXT[language].hintMine:TEXT[language].hintPlace;$("mineToggle").textContent=mode==="mine"?TEXT[language].mine:TEXT[language].place;render();
 }
 function toast(s){const e=$("toast");e.textContent=s;e.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove("show"),1700);}
 $("mineToggle").onclick=()=>{setMode(mode==="mine"?"place":"mine");saveWorld(false);};\n$("languageToggle").onclick=()=>{language=language==="ja"?"en":"ja";localStorage.setItem("stoneblock-language",language);applyLanguage();};
