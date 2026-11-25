@@ -68,6 +68,7 @@ const TYPES = [
 {id:"peat",name:"泥炭",nameEn:"Peat",group:"terrain",color:"#55402f",symbol:"▪",weight:5},
 {id:"clay",name:"粘土",nameEn:"Clay",group:"terrain",color:"#a66f67",symbol:"▪",weight:12},
 {id:"sand",name:"砂",nameEn:"Sand",group:"terrain",color:"#d7bd75",symbol:"▪",weight:15},
+{id:"clay",name:"粘土",nameEn:"Clay",group:"terrain",color:"#a66f67",symbol:"▪",weight:0},
 {id:"stone",name:"石",nameEn:"Stone",group:"rock",color:"#858b91",symbol:"▪",weight:35},
 {id:"coal",name:"石炭",nameEn:"Coal",group:"rock",color:"#303438",symbol:"◆",weight:6},
 {id:"granite",name:"花崗岩",nameEn:"Granite",group:"rock",color:"#b47c76",symbol:"▪",weight:10},
@@ -97,6 +98,8 @@ const TYPES = [
 {id:"furnace",name:"かまど",nameEn:"Furnace",group:"building",color:"#b95e43",symbol:"▣",weight:0},
 {id:"storage",name:"倉庫",nameEn:"Storage",group:"building",color:"#9a754d",symbol:"▤",weight:0},
 {id:"road",name:"道路",nameEn:"Road",group:"building",color:"#777b78",symbol:"━",weight:0},
+{id:"brick",name:"レンガ",nameEn:"Brick",group:"building",color:"#ad654e",symbol:"▦",weight:0},
+{id:"stone_brick",name:"石レンガ",nameEn:"Stone Brick",group:"building",color:"#92958f",symbol:"▦",weight:0},
 {id:"house",name:"住宅",nameEn:"House",group:"building",color:"#d2a66b",symbol:"⌂",weight:0},
 {id:"farm",name:"畑",nameEn:"Farm",group:"building",color:"#8b9e48",symbol:"▦",weight:0},
 {id:"iron_ingot",name:"鉄インゴット",nameEn:"Iron Ingot",group:"metal",color:"#d1c5b4",symbol:"■",weight:0},
@@ -107,7 +110,7 @@ let world=[],baseWorld=[],inventory={},mode="mine",selected="dirt",mined=0,page=
 let language=localStorage.getItem("stoneblock-language")==="en"?"en":"ja";
 const REVEAL_RADIUS=5;
 const LIFE_SURFACE_Y=116;
-const BUILD_COST={conveyor:{stone:1},miner:{iron:5,stone:8},furnace:{stone:8,coal:2},storage:{wood:8},road:{stone:1},house:{wood:12,stone:4},farm:{wood:3,stone:2}};
+const BUILD_COST={conveyor:{stone:1},miner:{iron:5,stone:8},furnace:{stone:8,coal:2},storage:{wood:8},road:{stone:1},brick:{clay:2,coal:1},stone_brick:{stone:2},house:{wood:12,stone:4},farm:{wood:3,stone:2}};
 function updateVisibility(){
  visibility=Array.from({length:H},()=>Array(W).fill(99));
  const queue=new Int32Array(W*H),dist=new Int8Array(W*H);dist.fill(99);let head=0,tail=0;
@@ -154,6 +157,7 @@ function generateLifeBase(){
   else if(ore>.66&&forest<.25)map[y][x]=hash2(x+71,y-23)>.5?"iron":"coal";
   else if(ore<-.62&&forest<.25)map[y][x]=hash2(x-31,y+17)>.5?"stone":"copper";
   else if(forest>.48&&hash2(x+19,y+43)>.55)map[y][x]="wood";
+  else if(moisture>.42&&fbm(x*.12+29,y*.12-61,2)>.22)map[y][x]="clay";
   else if(moisture>.42)map[y][x]="sand";
  }
  for(let y=H/2-8;y<=H/2+8;y++)for(let x=W/2-8;x<=W/2+8;x++)map[y][x]=EMPTY;
@@ -290,7 +294,11 @@ function drawWorld(){
   else if(activeWorld==="life"&&id==="sand"){ctx.fillStyle="#d7bd75";ctx.fillRect(px,py,cell,cell);}
   else if(activeWorld==="life"&&(id==="iron"||id==="coal")){ctx.fillStyle="#9b8d76";ctx.fillRect(px+4,py+4,cell-8,cell-8);ctx.fillStyle=t.color;ctx.fillRect(px+10,py+10,7,7);ctx.fillRect(px+21,py+20,6,6);}
   else{ctx.fillStyle=t.color;ctx.fillRect(px,py,cell,cell);}
-  if(activeWorld==="life"&&t.group==="building"){ctx.strokeStyle="#26302b";ctx.lineWidth=2;ctx.strokeRect(px+3,py+3,cell-6,cell-6);ctx.fillStyle="#1f2924";ctx.font="bold 19px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(t.symbol,px+18,py+18);}
+  if(activeWorld==="life"&&id==="brick"){
+   ctx.fillStyle="#ad654e";ctx.fillRect(px,py,cell,cell);ctx.strokeStyle="#e2ad91";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(px,py+12);ctx.lineTo(px+cell,py+12);ctx.moveTo(px,py+24);ctx.lineTo(px+cell,py+24);ctx.moveTo(px+18,py);ctx.lineTo(px+18,py+12);ctx.moveTo(px+9,py+12);ctx.lineTo(px+9,py+24);ctx.moveTo(px+27,py+12);ctx.lineTo(px+27,py+24);ctx.moveTo(px+18,py+24);ctx.lineTo(px+18,py+cell);ctx.stroke();
+  }else if(activeWorld==="life"&&id==="stone_brick"){
+   ctx.fillStyle="#92958f";ctx.fillRect(px,py,cell,cell);ctx.strokeStyle="#c8cbc3";ctx.lineWidth=1.5;ctx.strokeRect(px+1,py+1,cell-2,cell-2);ctx.beginPath();ctx.moveTo(px,py+18);ctx.lineTo(px+cell,py+18);ctx.moveTo(px+18,py);ctx.lineTo(px+18,py+18);ctx.moveTo(px+9,py+18);ctx.lineTo(px+9,py+cell);ctx.moveTo(px+27,py+18);ctx.lineTo(px+27,py+cell);ctx.stroke();
+  }else if(activeWorld==="life"&&t.group==="building"){ctx.strokeStyle="#26302b";ctx.lineWidth=2;ctx.strokeRect(px+3,py+3,cell-6,cell-6);ctx.fillStyle="#1f2924";ctx.font="bold 19px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(t.symbol,px+18,py+18);}
   // Fine, irregular mineral/soil grain: subtle pixel clusters, no tile outlines.
   let seed=((x*374761393)^(y*668265263)^(id.length*2246822519))>>>0;
   const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
@@ -316,7 +324,11 @@ function interact(x,y){
  if(activeWorld==="life"){
   const id=world[y][x];
   if(mode==="mine"){
-   const drops={wood:"wood",iron:"iron",coal:"coal",stone:"stone",copper:"copper"};
+   const drops={wood:"wood",iron:"iron",coal:"coal",stone:"stone",copper:"copper",clay:"clay"};
+   if(id&&BUILD_COST[id]){
+    for(const [item,count] of Object.entries(BUILD_COST[id]))inventory[item]=(inventory[item]||0)+count;
+    world[y][x]=EMPTY;mined++;saveInventory();saveWorld(false);render();toast(typeById(id).name+"を撤去し、資材を回収しました");return;
+   }
    if(!id||!drops[id]){toast("ここには採掘できる資源がありません");return;}
    inventory[drops[id]]=(inventory[drops[id]]||0)+1;world[y][x]=EMPTY;mined++;saveInventory();saveWorld(false);render();toast(typeById(drops[id]).name+"を1個回収");return;
   }
@@ -360,11 +372,15 @@ function simulateLifeWorld(){
  if(changed){saveInventory();saveWorld(false);render();toast("工場が資源を生産しました");}
 }
 setInterval(simulateLifeWorld,5000);
+function maxBuildable(id){
+ const cost=BUILD_COST[id];if(!cost)return 0;
+ return Math.min(...Object.entries(cost).map(([item,count])=>Math.floor((inventory[item]||0)/count)));
+}
 function resourceRow(t){
  const row=document.createElement("div");row.className="resource";
  const swatch=document.createElement("span");swatch.className="swatch";swatch.style.background=t.color;
  const name=document.createElement("span");name.className="name";name.textContent=language==="en"?(t.nameEn||t.name):t.name;
- const count=document.createElement("b");count.className="count";count.textContent=String(inventory[t.id]||0);
+ const count=document.createElement("b");count.className="count";count.textContent=activeWorld==="life"&&t.group==="building"?"最大 "+maxBuildable(t.id):String(inventory[t.id]||0);
  row.append(swatch,name,count);
  row.addEventListener("click",()=>{selected=t.id;document.querySelectorAll(".resource").forEach(e=>e.style.outline="");row.style.outline="1px solid #a6b5b2";$("hint").textContent=(language==="en"?"Selected: ":"選択中：")+name.textContent;saveWorld(false);});
  return row;
