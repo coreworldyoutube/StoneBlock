@@ -30,7 +30,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
 .drawer{display:none;position:fixed;inset:0;background:#0009;z-index:10;justify-content:flex-end}.drawer.open{display:flex}.drawer-card{background:#1a2022;width:min(420px,92vw);height:100%;padding:16px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;border-left:1px solid #3a4546}.drawer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .footer-note{color:var(--muted);font-size:11px;margin-top:8px}.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#252e30;border:1px solid #566363;padding:8px 13px;border-radius:4px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}.toast.show{opacity:1}
 .mobile-resource{display:none}
-.version{font-size:10px;color:var(--muted);letter-spacing:.04em;margin-left:8px}
+.brand .version{font-size:10px;color:var(--muted);letter-spacing:.04em;margin-left:8px}
 @media(max-width:850px){
  header{height:48px;padding:0 9px}.brand{font-size:15px}.subtitle{display:none}.stats .stat:first-child{display:none}
  main{height:calc(100dvh - 48px)}
@@ -88,9 +88,64 @@ let worldSeed=0;
 // === Persistent state: world and inventory are stored separately ===
 const SAVE_KEY="stoneblock-world-v1";
 const INVENTORY_KEY="stoneblock-inventory-v1";
-function saveInventory(){try{localStorage.setItem(INVENTORY_KEY,JSON.stringify(inventory));return true;}catch(e){toast("インベントリを保存できませんでした");return false;}}
-function loadInventory(){try{const raw=localStorage.getItem(INVENTORY_KEY);const saved=raw?JSON.parse(raw):null;inventory={};for(const t of TYPES)inventory[t.id]=Number(saved?.[t.id])||0;}catch(e){inventory={};for(const t of TYPES)inventory[t.id]=0;}}
-function saveWorld(show=true){try{const changes=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(world[y][x]!==baseWorld[y][x])changes.push([i,world[y][x]]);}const data={version:SAVE_FORMAT_VERSION,seed:worldSeed,changes,mined,selected,mode,cameraX,cameraY};localStorage.setItem(SAVE_KEY,JSON.stringify(data));if(show)toast("ワールドを保存しました（変更箇所 "+changes.length+"）");return true;}catch(e){toast("保存できませんでした（容量・ブラウザ設定を確認）");return false;}}
+function saveInventory() {
+  try {
+    localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
+    return true;
+  } catch (error) {
+    toast("インベントリを保存できませんでした");
+    return false;
+  }
+}
+
+function loadInventory() {
+  try {
+    const raw = localStorage.getItem(INVENTORY_KEY);
+    const saved = raw ? JSON.parse(raw) : null;
+    inventory = {};
+    for (const type of TYPES) {
+      inventory[type.id] = Number(saved?.[type.id]) || 0;
+    }
+  } catch (error) {
+    inventory = {};
+    for (const type of TYPES) inventory[type.id] = 0;
+  }
+}
+
+function saveWorld(show = true) {
+  try {
+    const changes = [];
+
+    // Save only cells that differ from the seeded base world.
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const index = y * W + x;
+        if (world[y][x] !== baseWorld[y][x]) {
+          changes.push([index, world[y][x]]);
+        }
+      }
+    }
+
+    const data = {
+      version: SAVE_FORMAT_VERSION,
+      seed: worldSeed,
+      changes,
+      mined,
+      selected,
+      mode,
+      cameraX,
+      cameraY
+    };
+
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    if (show) toast("ワールドを保存しました（変更箇所 " + changes.length + "）");
+    return true;
+  } catch (error) {
+    toast("保存できませんでした（容量・ブラウザ設定を確認）");
+    return false;
+  }
+}
+
 function loadWorld(show=true){try{
  const raw=localStorage.getItem(SAVE_KEY);if(!raw){if(show)toast("保存データがありません");return false;}
  const d=JSON.parse(raw);if(![1,2,3,4,5,SAVE_FORMAT_VERSION].includes(d.version))throw new Error("invalid save");
@@ -272,22 +327,113 @@ $("drawer").addEventListener("click",e=>{if(e.target===$("drawer"))$("drawer").c
 $("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;invTab=b.dataset.tab;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));renderResources();});
 $("randomWorld").onclick=()=>{if(confirm(tr("randomConfirm"))){generate();saveWorld(false);saveInventory();toast(tr("randomDone")+" "+worldSeed);}};
 $("applySeed").onclick=()=>{const raw=$("seedInput").value.trim(),seed=Number(raw);if(raw===""||!Number.isSafeInteger(seed)){toast(tr("seedInvalid"));return;}if(confirm(tr("seedConfirm")+" ("+seed+")")){generate(seed);saveWorld(false);saveInventory();toast(tr("seedDone")+" "+worldSeed);}};
-$("resetLocalData").onclick=()=>{if(!confirm(tr("resetConfirm")))return;localStorage.removeItem(SAVE_KEY);localStorage.removeItem(INVENTORY_KEY);location.reload();};
+// Reset only game data. Keep the language preference.
+$("resetLocalData").onclick = () => {
+  if (!confirm(tr("resetConfirm"))) return;
+
+  localStorage.removeItem(SAVE_KEY);
+  localStorage.removeItem(INVENTORY_KEY);
+
+  // With no saved world, boot() creates a new random seed and centers the camera.
+  location.reload();
+};
 // === Startup and browser-native scroll synchronization ===
-async function boot(){
-const br=await fetch("data/blocks.json");if(!br.ok)throw Error("blocks.json load failed");TYPES=await br.json();language=localStorage.getItem("stoneblock-language")||"ja";const lr=await fetch("data/lang/"+language+".json");LANG=await lr.json();loadInventory();
- const hasSavedWorld=loadWorld(false);applyLanguage();if(!hasSavedWorld){generate();saveWorld(false);}
- const wrap=document.querySelector(".world-wrap");
-if(!hasSavedWorld){cameraX=(W*36-wrap.clientWidth)/2;cameraY=(H*36-wrap.clientHeight)/2;}
-clampCamera();
-let saveCameraTimer;
-wrap.addEventListener("scroll",()=>{cameraX=wrap.scrollLeft-RENDER_MARGIN_PX;cameraY=wrap.scrollTop-RENDER_MARGIN_PX;clampCamera();drawWorld();drawMinimap();clearTimeout(saveCameraTimer);saveCameraTimer=setTimeout(()=>saveWorld(false),500);},{passive:true});
-$("minimap").addEventListener("click",e=>{const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W*36,y=(e.clientY-r.top)/r.height*H*36;cameraX=x-wrap.clientWidth/2;cameraY=y-wrap.clientHeight/2;clampCamera();render();saveWorld(false);});
-const canvas=$("world");
-canvas.addEventListener("click",e=>{const rect=wrap.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left+wrap.scrollLeft-RENDER_MARGIN_PX)/36),y=Math.floor((e.clientY-rect.top+wrap.scrollTop-RENDER_MARGIN_PX)/36);if(x>=0&&y>=0&&x<W&&y<H)interact(x,y);});
-window.addEventListener("keydown",e=>{if(["INPUT","SELECT","TEXTAREA"].includes(document.activeElement?.tagName))return;const step=e.shiftKey?180:54;let moved=true;if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a")cameraX-=step;else if(e.key==="ArrowRight"||e.key.toLowerCase()==="d")cameraX+=step;else if(e.key==="ArrowUp"||e.key.toLowerCase()==="w")cameraY-=step;else if(e.key==="ArrowDown"||e.key.toLowerCase()==="s")cameraY+=step;else moved=false;if(moved){e.preventDefault();clampCamera();render();saveWorld(false);}});
-window.addEventListener("resize",()=>{clampCamera();drawWorld();drawMinimap();});
-window.addEventListener("pagehide",()=>saveWorld(false));drawWorld();drawMinimap();
+async function boot() {
+  const blockResponse = await fetch("data/blocks.json");
+  if (!blockResponse.ok) throw new Error("blocks.json load failed");
+
+  TYPES = await blockResponse.json();
+  if (!Array.isArray(TYPES)) throw new Error("blocks.json must contain an array");
+
+  const savedLanguage = localStorage.getItem("stoneblock-language");
+  language = savedLanguage === "en" ? "en" : "ja";
+
+  const languageResponse = await fetch("data/lang/" + language + ".json");
+  if (!languageResponse.ok) throw new Error("language file load failed");
+  LANG = await languageResponse.json();
+
+  loadInventory();
+
+  const hasSavedWorld = loadWorld(false);
+  applyLanguage();
+
+  if (!hasSavedWorld) {
+    generate();
+    saveWorld(false);
+  }
+
+  const wrap = document.querySelector(".world-wrap");
+
+  // New worlds always begin at the exact center of the 300x300 field.
+  if (!hasSavedWorld) {
+    cameraX = (W * 36 - wrap.clientWidth) / 2;
+    cameraY = (H * 36 - wrap.clientHeight) / 2;
+  }
+
+  clampCamera();
+
+  let saveCameraTimer;
+  wrap.addEventListener("scroll", () => {
+    cameraX = wrap.scrollLeft - RENDER_MARGIN_PX;
+    cameraY = wrap.scrollTop - RENDER_MARGIN_PX;
+    clampCamera();
+    drawWorld();
+    drawMinimap();
+
+    clearTimeout(saveCameraTimer);
+    saveCameraTimer = setTimeout(() => saveWorld(false), 500);
+  }, { passive: true });
+
+  $("minimap").addEventListener("click", event => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width * W * 36;
+    const y = (event.clientY - rect.top) / rect.height * H * 36;
+
+    cameraX = x - wrap.clientWidth / 2;
+    cameraY = y - wrap.clientHeight / 2;
+    clampCamera();
+    render();
+    saveWorld(false);
+  });
+
+  const canvas = $("world");
+  canvas.addEventListener("click", event => {
+    const rect = wrap.getBoundingClientRect();
+    const x = Math.floor((event.clientX - rect.left + wrap.scrollLeft - RENDER_MARGIN_PX) / 36);
+    const y = Math.floor((event.clientY - rect.top + wrap.scrollTop - RENDER_MARGIN_PX) / 36);
+
+    if (x >= 0 && y >= 0 && x < W && y < H) interact(x, y);
+  });
+
+  window.addEventListener("keydown", event => {
+    if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName)) return;
+
+    const step = event.shiftKey ? 180 : 54;
+    let moved = true;
+
+    if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") cameraX -= step;
+    else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") cameraX += step;
+    else if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") cameraY -= step;
+    else if (event.key === "ArrowDown" || event.key.toLowerCase() === "s") cameraY += step;
+    else moved = false;
+
+    if (moved) {
+      event.preventDefault();
+      clampCamera();
+      render();
+      saveWorld(false);
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    clampCamera();
+    drawWorld();
+    drawMinimap();
+  });
+
+  window.addEventListener("pagehide", () => saveWorld(false));
+  drawWorld();
+  drawMinimap();
 }
 boot().catch(error=>{console.error(error);toast("ゲームデータを読み込めませんでした");});
 })();
