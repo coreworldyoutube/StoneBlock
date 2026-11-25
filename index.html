@@ -414,9 +414,15 @@ loadInventory();
  let saveScrollTimer;wrap.addEventListener("scroll",()=>{drawWorld();drawMinimap();clearTimeout(saveScrollTimer);saveScrollTimer=setTimeout(()=>saveWorld(false),500);},{passive:true});
  $("minimap").addEventListener("click",e=>{const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W*36,y=(e.clientY-r.top)/r.height*H*36;wrap.scrollLeft=Math.max(0,x-wrap.clientWidth/2);wrap.scrollTop=Math.max(0,y-wrap.clientHeight/2);drawWorld();drawMinimap();});
  $("world").addEventListener("click",e=>{
-  if(e.target!==$("world"))return;
-  const rect=wrap.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left+wrap.scrollLeft)/36),y=Math.floor((e.clientY-rect.top+wrap.scrollTop)/36);
-  if(x>=0&&y>=0&&x<W&&y<H){if(activeWorld==="life")interact(x,y);else if(mode==="mine"){if(exposed(x,y))interact(x,y);}else if(isAir(x,y))interact(x,y);}
+  const canvasRect=$("world").getBoundingClientRect();
+  const localX=e.clientX-canvasRect.left,localY=e.clientY-canvasRect.top;
+  if(localX<0||localY<0||localX>=canvasRect.width||localY>=canvasRect.height)return;
+  const x=Math.floor((localX+wrap.scrollLeft)/36),y=Math.floor((localY+wrap.scrollTop)/36);
+  if(x>=0&&y>=0&&x<W&&y<H){
+   if(activeWorld==="life")interact(x,y);
+   else if(mode==="mine"){if(exposed(x,y))interact(x,y);}
+   else if(isAir(x,y))interact(x,y);
+  }
  });
  window.addEventListener("resize",drawWorld);window.addEventListener("pagehide",()=>saveWorld(false));applyLanguage();drawWorld();
 })();
