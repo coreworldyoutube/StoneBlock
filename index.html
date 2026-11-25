@@ -345,13 +345,15 @@ function interact(x,y){
  if(activeWorld==="life"){
   const id=world[y][x];
   if(mode==="mine"){
-   const drops={wood:"wood",iron:"iron",coal:"coal",stone:"stone",copper:"copper",clay:"clay"};
-   if(id&&BUILD_COST[id]){
+   if(!id||id===EMPTY){toast("ここには撤去できるブロックがありません");return;}
+   if(BUILD_COST[id]){
     for(const [item,count] of Object.entries(BUILD_COST[id]))inventory[item]=(inventory[item]||0)+count;
     world[y][x]=EMPTY;mined++;saveInventory();saveWorld(false);render();toast(typeById(id).name+"を撤去し、資材を回収しました");return;
    }
-   if(!id||!drops[id]){toast("ここには採掘できる資源がありません");return;}
-   inventory[drops[id]]=(inventory[drops[id]]||0)+1;world[y][x]=EMPTY;mined++;saveInventory();saveWorld(false);render();toast(typeById(drops[id]).name+"を1個回収");return;
+   // Life World: every placed or generated block can be removed.
+   // Ordinary blocks return one unit of their own type; no drop whitelist.
+   inventory[id]=(inventory[id]||0)+1;
+   world[y][x]=EMPTY;mined++;saveInventory();saveWorld(false);render();toast(typeById(id).name+"を1個回収");return;
   }
   if(id){toast("そこには配置できません");return;}
   const cost=BUILD_COST[selected];
