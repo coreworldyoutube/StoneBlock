@@ -6,7 +6,7 @@
 <title>StoneBlock — 地下採掘</title>
 <style>
 :root{color-scheme:dark;--bg:#101315;--panel:#1a2022;--panel2:#252d2f;--line:#343d3f;--text:#e4e9e7;--muted:#929e99;--accent:#a6b5b2;--good:#8fba9a}
-*{box-sizing:border-box}html{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg)}body{position:fixed;inset:0;margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}main,main>section,.world-wrap,#world{overscroll-behavior:none;touch-action:none}
+*{box-sizing:border-box}html{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg)}body{position:fixed;inset:0;margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}main,main>section{overscroll-behavior:none;touch-action:none}
 button,input{font:inherit}button{cursor:pointer;color:inherit;background:#252d2f;border:1px solid #3a4546;border-radius:4px;padding:7px 10px}button:hover{background:#303a3b;border-color:#687675}button:disabled{opacity:.35;cursor:not-allowed}
 header{height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid #30393a;background:#171d1f;position:relative;z-index:5}
 .brand{font-size:17px;font-weight:800;letter-spacing:.08em}.brand span{color:var(--accent)}.subtitle{color:var(--muted);font-size:11px}
@@ -17,8 +17,9 @@ main>section{height:100%;border:0!important;border-radius:0!important;background
 main>section>.panel-head{position:absolute;top:12px;left:14px;z-index:3;border:0;background:#171d1fdc;border-radius:4px;padding:7px 9px}
 main>section>.panel-body{position:absolute;top:12px;right:248px;z-index:3;padding:0;background:#171d1fdc;border-radius:4px}
 main>section>.panel-body .subtitle{display:none}
-.world-wrap{position:relative;height:100%;width:100%;overflow:hidden;background:#090d0e;padding:0;display:block;overscroll-behavior:none;touch-action:none}
-#world{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;max-height:none;touch-action:none;user-select:none;cursor:crosshair}
+.world-wrap{position:relative;height:100%;width:100%;overflow:auto;background:#090d0e;padding:0;display:block;overscroll-behavior:contain;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+#world-stage{position:relative;width:11520px;height:11520px}
+#world{position:sticky;top:-360px;left:-360px;display:block;max-width:none;max-height:none;touch-action:pan-x pan-y;user-select:none;cursor:crosshair}
 
 #map-panel{position:absolute;right:12px;bottom:12px;z-index:4;background:#101719d9;border:1px solid #3a4546;padding:5px;border-radius:3px}.map-title{font-size:10px;color:#aab5b1;letter-spacing:.12em;margin:0 0 4px 2px}#minimap{display:block;width:150px;height:150px;image-rendering:pixelated;cursor:pointer}@media(max-width:850px){#map-panel{right:7px;top:54px;bottom:auto;padding:3px}#minimap{width:104px;height:104px}}.legend{display:none}.modebar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.modebtn.active{background:#394344;border-color:var(--accent);color:#e0e8e5}.modebtn.place.active{background:#294235;border-color:var(--good);color:#c9e6ce}
 select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid #3a4546;border-radius:3px;padding:6px;max-width:76px}
@@ -33,7 +34,6 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
  main>section>.panel-head{top:7px;left:7px;padding:5px 6px}
  main>section>.panel-body{top:auto;right:7px;bottom:7px;padding:0}
  main>section>.panel-body .modebar{gap:4px}
- #world{width:100%;height:100%;left:0;top:0;right:0;bottom:0}
  .side{display:none}.mobile-resource{display:flex;gap:5px;align-items:center}.mobile-resource .stat{display:none}
 }
 </style>
@@ -47,7 +47,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
   <div class="subtitle" id="hint">空気に接しているブロックをタップして1マス採掘</div>
   <div class="modebar"><label for="seedInput" class="subtitle">SEED</label><input id="seedInput" type="number" step="1" inputmode="numeric" placeholder="シード値" style="width:116px;max-width:116px"><button id="randomWorld">ランダム生成</button><button id="applySeed">指定シードで生成</button></div>
  </div>
- <div class="world-wrap"><canvas id="world" aria-label="採掘フィールド"></canvas></div><div id="map-panel"><div class="map-title">MAP</div><canvas id="minimap" width="150" height="150" aria-label="全体マップ"></canvas></div>
+ <div class="world-wrap"><div id="world-stage"><canvas id="world" aria-label="採掘フィールド"></canvas></div></div><div id="map-panel"><div class="map-title">MAP</div><canvas id="minimap" width="150" height="150" aria-label="全体マップ"></canvas></div>
 
 </section>
 <aside class="side">
@@ -65,7 +65,7 @@ const W=300,H=300,EMPTY=null;
 let world=[],baseWorld=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",visibility=[];
 let conveyors={},furnaces={},toolMode="none",distributeMode=false,beltDirection="right",language="ja",LANG={},MACHINE_TYPES=[];
  let cameraX=0,cameraY=0;
-const REVEAL_RADIUS=5;
+const REVEAL_RADIUS=5,RENDER_MARGIN=10,RENDER_MARGIN_PX=RENDER_MARGIN*36;
 function updateVisibility(){
  visibility=Array.from({length:H},()=>Array(W).fill(99));
  const queue=new Int32Array(W*H),dist=new Int8Array(W*H);dist.fill(99);let head=0,tail=0;
@@ -175,13 +175,14 @@ function exposed(x,y){if(isAir(x,y))return false;return isAir(x+1,y)||isAir(x-1,
 function drawWorld(){
  const canvas=$("world"),wrap=document.querySelector(".world-wrap"),ctx=canvas.getContext("2d");
  const dpr=Math.min(window.devicePixelRatio||1,2),vw=wrap.clientWidth,vh=wrap.clientHeight;
- canvas.width=Math.floor(vw*dpr);canvas.height=Math.floor(vh*dpr);canvas.style.width=vw+"px";canvas.style.height=vh+"px";
- ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle="#090d0e";ctx.fillRect(0,0,vw,vh);
+ const canvasW=vw+RENDER_MARGIN_PX*2,canvasH=vh+RENDER_MARGIN_PX*2;
+ canvas.width=Math.floor(canvasW*dpr);canvas.height=Math.floor(canvasH*dpr);canvas.style.width=canvasW+"px";canvas.style.height=canvasH+"px";
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle="#090d0e";ctx.fillRect(0,0,canvasW,canvasH);
  const cell=36;clampCamera();const sx=cameraX,sy=cameraY;
- const x0=Math.max(0,Math.floor(sx/cell)),y0=Math.max(0,Math.floor(sy/cell));
- const x1=Math.min(W,Math.ceil((sx+vw)/cell)),y1=Math.min(H,Math.ceil((sy+vh)/cell));
+ const x0=Math.max(0,Math.floor(sx/cell)-RENDER_MARGIN),y0=Math.max(0,Math.floor(sy/cell)-RENDER_MARGIN);
+ const x1=Math.min(W,Math.ceil((sx+vw)/cell)+RENDER_MARGIN),y1=Math.min(H,Math.ceil((sy+vh)/cell)+RENDER_MARGIN);
  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
-  const id=world[y][x],px=x*cell-sx,py=y*cell-sy,distance=visibility[y]?.[x]??99;
+  const id=world[y][x],px=x*cell-sx+RENDER_MARGIN_PX,py=y*cell-sy+RENDER_MARGIN_PX,distance=visibility[y]?.[x]??99;
   if(distance>REVEAL_RADIUS||id===EMPTY)continue;
   const t=typeById(id),darkness=Math.max(0,Math.min(.96,(distance-1)/5));ctx.globalAlpha=1-darkness;ctx.fillStyle=t.color;ctx.fillRect(px,py,cell,cell);
   // Fine, irregular mineral/soil grain: subtle pixel clusters, no tile outlines.
@@ -198,7 +199,7 @@ function drawWorld(){
   }
   ctx.globalAlpha=1;
  }
- drawMachines(ctx,sx,sy,cell,x0,y0,x1,y1);
+ drawMachines(ctx,sx-RENDER_MARGIN_PX,sy-RENDER_MARGIN_PX,cell,x0,y0,x1,y1);
 }
 function drawMachines(ctx,sx,sy,cell,x0,y0,x1,y1){
  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const key=String(y*W+x),px=x*cell-sx,py=y*cell-sy;
@@ -215,7 +216,7 @@ function drawMachines(ctx,sx,sy,cell,x0,y0,x1,y1){
 function nextBeltCell(x,y,d){if(d==="right")x++;else if(d==="left")x--;else if(d==="up")y--;else y++;return x<0||y<0||x>=W||y>=H?null:String(y*W+x);}
 function acceptAtFurnace(key,item){const f=furnaces[key];if(!f||f.enabled===false)return false;if(item==="coal"||item==="peat")f.fuel=(f.fuel||0)+(item==="coal"?8:4);else if(item==="iron"||item==="copper")f.ore=(f.ore||[]).concat(item);while((f.fuel||0)>0&&(f.ore||[]).length){const ore=f.ore.shift();f.fuel--;const out=ore+"_ingot";inventory[out]=(inventory[out]||0)+1;}return true;}
 function conveyorTick(){let changed=false;for(const key of Object.keys(conveyors)){const b=conveyors[key];if(b.enabled===false)continue;const i=Number(key),x=i%W,y=Math.floor(i/W);if(!Array.isArray(b.lanes))b.lanes=[Array(4).fill(null),Array(4).fill(null)];for(let lane=0;lane<2;lane++){const a=b.lanes[lane];for(let s=3;s>=0;s--){if(!a[s])continue;if(s<3){if(!a[s+1]){a[s+1]=a[s];a[s]=null;changed=true;}}else{const next=nextBeltCell(x,y,b.dir);if(next&&conveyors[next]&&conveyors[next].dir===b.dir){const dest=conveyors[next];if(!Array.isArray(dest.lanes))dest.lanes=[Array(4).fill(null),Array(4).fill(null)];if(!dest.lanes[lane][0]){dest.lanes[lane][0]=a[s];a[s]=null;changed=true;}}else if(next&&furnaces[next]&&acceptAtFurnace(next,a[s])){a[s]=null;changed=true;}}}}}if(changed){render();saveWorld(false);saveInventory();}}
-function clampCamera(){const wrap=document.querySelector(".world-wrap");const maxX=Math.max(0,W*36-wrap.clientWidth),maxY=Math.max(0,H*36-wrap.clientHeight);cameraX=Math.max(0,Math.min(maxX,cameraX));cameraY=Math.max(0,Math.min(maxY,cameraY));}
+function clampCamera(){const wrap=document.querySelector(".world-wrap");const maxX=Math.max(0,W*36-wrap.clientWidth),maxY=Math.max(0,H*36-wrap.clientHeight);cameraX=Math.max(0,Math.min(maxX,cameraX));cameraY=Math.max(0,Math.min(maxY,cameraY));const left=cameraX+RENDER_MARGIN_PX,top=cameraY+RENDER_MARGIN_PX;if(wrap.scrollLeft!==left)wrap.scrollLeft=left;if(wrap.scrollTop!==top)wrap.scrollTop=top;}
  function drawMinimap(){const c=$("minimap"),ctx=c.getContext("2d"),sx=c.width/W,sy=c.height/H;ctx.fillStyle="#090d0e";ctx.fillRect(0,0,c.width,c.height);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=visibility[y]?.[x]??99;if(d>REVEAL_RADIUS||world[y][x]===EMPTY)continue;ctx.globalAlpha=1-Math.max(0,(d-1)/5);ctx.fillStyle=typeById(world[y][x]).color;ctx.fillRect(x*sx,y*sy,Math.ceil(sx),Math.ceil(sy));}ctx.globalAlpha=1;const wrap=document.querySelector(".world-wrap"),cell=36;ctx.strokeStyle="#f0f3f2";ctx.lineWidth=1;ctx.strokeRect(cameraX/(W*cell)*c.width,cameraY/(H*cell)*c.height,wrap.clientWidth/(W*cell)*c.width,wrap.clientHeight/(H*cell)*c.height);}
 function render(){
  drawWorld();drawMinimap();
@@ -278,14 +279,12 @@ const br=await fetch("data/blocks.json");if(!br.ok)throw Error("blocks.json load
  const hasSavedWorld=loadWorld(false);applyLanguage();if(!hasSavedWorld){generate();saveWorld(false);}
  const wrap=document.querySelector(".world-wrap");
 if(!hasSavedWorld){cameraX=(W*36-wrap.clientWidth)/2;cameraY=(H*36-wrap.clientHeight)/2;}
-let saveCameraTimer,drag=null,skipWorldClick=false;
+clampCamera();
+let saveCameraTimer;
+wrap.addEventListener("scroll",()=>{cameraX=wrap.scrollLeft-RENDER_MARGIN_PX;cameraY=wrap.scrollTop-RENDER_MARGIN_PX;clampCamera();drawWorld();drawMinimap();clearTimeout(saveCameraTimer);saveCameraTimer=setTimeout(()=>saveWorld(false),500);},{passive:true});
 $("minimap").addEventListener("click",e=>{const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W*36,y=(e.clientY-r.top)/r.height*H*36;cameraX=x-wrap.clientWidth/2;cameraY=y-wrap.clientHeight/2;clampCamera();render();saveWorld(false);});
 const canvas=$("world");
-canvas.addEventListener("pointerdown",e=>{if(e.button!==0&&e.pointerType!=="touch")return;if(e.cancelable)e.preventDefault();drag={id:e.pointerId,startX:e.clientX,startY:e.clientY,lastX:e.clientX,lastY:e.clientY,moved:false};canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener("pointermove",e=>{if(!drag||drag.id!==e.pointerId)return;if(e.cancelable)e.preventDefault();const dx=e.clientX-drag.lastX,dy=e.clientY-drag.lastY;if(!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>5)drag.moved=true;if(drag.moved){cameraX-=dx;cameraY-=dy;clampCamera();render();drag.lastX=e.clientX;drag.lastY=e.clientY;}});
-const finishDrag=e=>{if(!drag||drag.id!==e.pointerId)return;if(drag.moved){skipWorldClick=true;clearTimeout(saveCameraTimer);saveCameraTimer=setTimeout(()=>saveWorld(false),250);}drag=null;};
-canvas.addEventListener("pointerup",finishDrag);canvas.addEventListener("pointercancel",finishDrag);
-canvas.addEventListener("click",e=>{if(skipWorldClick){skipWorldClick=false;return;}const rect=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left+cameraX)/36),y=Math.floor((e.clientY-rect.top+cameraY)/36);if(x>=0&&y>=0&&x<W&&y<H)interact(x,y);});
+canvas.addEventListener("click",e=>{const rect=wrap.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left+wrap.scrollLeft-RENDER_MARGIN_PX)/36),y=Math.floor((e.clientY-rect.top+wrap.scrollTop-RENDER_MARGIN_PX)/36);if(x>=0&&y>=0&&x<W&&y<H)interact(x,y);});
 window.addEventListener("keydown",e=>{if(["INPUT","SELECT","TEXTAREA"].includes(document.activeElement?.tagName))return;const step=e.shiftKey?180:54;let moved=true;if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a")cameraX-=step;else if(e.key==="ArrowRight"||e.key.toLowerCase()==="d")cameraX+=step;else if(e.key==="ArrowUp"||e.key.toLowerCase()==="w")cameraY-=step;else if(e.key==="ArrowDown"||e.key.toLowerCase()==="s")cameraY+=step;else moved=false;if(moved){e.preventDefault();clampCamera();render();saveWorld(false);}});
 window.addEventListener("resize",()=>{clampCamera();drawWorld();drawMinimap();});
 window.addEventListener("pagehide",()=>saveWorld(false));drawWorld();drawMinimap();setInterval(conveyorTick,350);
