@@ -63,6 +63,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
 <script>
 (() => {
 "use strict";
+// === Resource registry and world configuration ===
 let TYPES = [];
 const GAME_VERSION="0.3.0-dev";
 const SAVE_FORMAT_VERSION=6;
@@ -84,6 +85,7 @@ const $=id=>document.getElementById(id);
 const typeById=id=>TYPES.find(t=>t.id===id);
 // Seeded 2D gradient Perlin noise and fractal Brownian motion.
 let worldSeed=0;
+// === Persistent state: world and inventory are stored separately ===
 const SAVE_KEY="stoneblock-world-v1";
 const INVENTORY_KEY="stoneblock-inventory-v1";
 function saveInventory(){try{localStorage.setItem(INVENTORY_KEY,JSON.stringify(inventory));return true;}catch(e){toast("インベントリを保存できませんでした");return false;}}
@@ -106,6 +108,7 @@ function loadWorld(show=true){try{
  cameraX=Number.isFinite(d.cameraX)?d.cameraX:(Number(d.scrollLeft)||0);cameraY=Number.isFinite(d.cameraY)?d.cameraY:(Number(d.scrollTop)||0);clampCamera();
  drawWorld();drawMinimap();if(show)toast("保存したワールドを読み込みました");return true;
  }catch(e){if(show)toast("保存データを読み込めませんでした");return false;}}
+// === Deterministic terrain generation (same seed => same base world) ===
 function hash2(ix,iy){
  let h=(Math.imul(ix,374761393)+Math.imul(iy,668265263)+worldSeed)|0;
  h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967295;
@@ -177,6 +180,7 @@ function generate(seed=null){
 function isAir(x,y){return x<0||y<0||x>=W||y>=H||world[y][x]===EMPTY;}
 function adjacentToSolid(x,y){return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>x+dx>=0&&y+dy>=0&&x+dx<W&&y+dy<H&&world[y+dy][x+dx]!==EMPTY);}
 function exposed(x,y){if(isAir(x,y))return false;return isAir(x+1,y)||isAir(x-1,y)||isAir(x,y+1)||isAir(x,y-1);}
+// === Rendering: draw only the viewport plus the configured margin ===
 function drawWorld(){
  const canvas=$("world"),wrap=document.querySelector(".world-wrap"),ctx=canvas.getContext("2d");
  const dpr=Math.min(window.devicePixelRatio||1,2),vw=wrap.clientWidth,vh=wrap.clientHeight;
@@ -213,6 +217,7 @@ function render(){
  $("mined").textContent=mined;const total=Object.values(inventory).reduce((a,b)=>a+b,0);$("total").textContent=total;$("totalMobile").textContent=total;
  renderResources();
 }
+// === Player actions: one-cell mining or one-cell placement ===
 function interact(x,y){
   if(mode==="mine"){
   if(!exposed(x,y)){toast("このブロックはまだ空気に接していません");return;}
@@ -242,6 +247,7 @@ function setMode(next){
  mode=next;const toggle=$("mineToggle");toggle.textContent=mode==="mine"?"⛏ 採掘 ON":"▦ 採掘 OFF（設置）";toggle.classList.toggle("active",mode==="mine");toggle.classList.toggle("place",mode==="place");
  $("hint").textContent=mode==="mine"?"空気に接しているブロックをタップして採掘":"採掘OFF：インベントリからブロックを選び、空気マスをタップして1マス設置";render();
 }
+// === Localization and interface text ===
 function tr(k){return LANG[k]||k;}
 function applyLanguage(){
  $("language").value=language;
@@ -267,6 +273,7 @@ $("tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if
 $("randomWorld").onclick=()=>{if(confirm(tr("randomConfirm"))){generate();saveWorld(false);saveInventory();toast(tr("randomDone")+" "+worldSeed);}};
 $("applySeed").onclick=()=>{const raw=$("seedInput").value.trim(),seed=Number(raw);if(raw===""||!Number.isSafeInteger(seed)){toast(tr("seedInvalid"));return;}if(confirm(tr("seedConfirm")+" ("+seed+")")){generate(seed);saveWorld(false);saveInventory();toast(tr("seedDone")+" "+worldSeed);}};
 $("resetLocalData").onclick=()=>{if(!confirm(tr("resetConfirm")))return;localStorage.removeItem(SAVE_KEY);localStorage.removeItem(INVENTORY_KEY);location.reload();};
+// === Startup and browser-native scroll synchronization ===
 async function boot(){
 const br=await fetch("data/blocks.json");if(!br.ok)throw Error("blocks.json load failed");TYPES=await br.json();language=localStorage.getItem("stoneblock-language")||"ja";const lr=await fetch("data/lang/"+language+".json");LANG=await lr.json();loadInventory();
  const hasSavedWorld=loadWorld(false);applyLanguage();if(!hasSavedWorld){generate();saveWorld(false);}
