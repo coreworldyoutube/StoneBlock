@@ -14,6 +14,8 @@ main{height:calc(100dvh - 54px);width:100%;margin:0;padding:0;display:block;posi
 .panel{background:#1a2022;border:1px solid #303a3b;border-radius:5px;box-shadow:none;overflow:hidden}.panel-head{padding:9px 11px;border-bottom:1px solid #303a3b;display:flex;justify-content:space-between;align-items:center;gap:8px}.panel-body{padding:10px}
 .stats{display:flex;gap:6px}.stat{background:#202729;border:1px solid #333e40;padding:5px 9px;border-radius:3px;color:var(--muted);font-size:11px}.stat b{color:var(--text);margin-left:4px}
 main>section{height:100%;border:0!important;border-radius:0!important;background:transparent!important}
+/* Keep the world wrapper as the sticky canvas's nearest scroll container. */
+main>section.panel{overflow:visible}
 main>section>.panel-head{position:absolute;top:12px;left:14px;z-index:3;border:0;background:#171d1fdc;border-radius:4px;padding:7px 9px}
 main>section>.panel-body{position:absolute;top:12px;right:248px;z-index:3;padding:0;background:#171d1fdc;border-radius:4px}
 main>section>.panel-body .subtitle{display:none}
