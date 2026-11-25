@@ -6,7 +6,7 @@
 <title>StoneBlock — 地下採掘</title>
 <style>
 :root{color-scheme:dark;--bg:#101315;--panel:#1a2022;--panel2:#252d2f;--line:#343d3f;--text:#e4e9e7;--muted:#929e99;--accent:#a6b5b2;--good:#8fba9a}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}main,main>section,.world-wrap,#world{overscroll-behavior:none;touch-action:none}
+*{box-sizing:border-box}html{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg)}body{position:fixed;inset:0;margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}main,main>section,.world-wrap,#world{overscroll-behavior:none;touch-action:none}
 button,input{font:inherit}button{cursor:pointer;color:inherit;background:#252d2f;border:1px solid #3a4546;border-radius:4px;padding:7px 10px}button:hover{background:#303a3b;border-color:#687675}button:disabled{opacity:.35;cursor:not-allowed}
 header{height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid #30393a;background:#171d1f;position:relative;z-index:5}
 .brand{font-size:17px;font-weight:800;letter-spacing:.08em}.brand span{color:var(--accent)}.subtitle{color:var(--muted);font-size:11px}
@@ -24,7 +24,7 @@ main>section>.panel-body .subtitle{display:none}
 select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid #3a4546;border-radius:3px;padding:6px;max-width:76px}
 .side{position:absolute;right:12px;top:12px;width:220px;display:flex;flex-direction:column;gap:8px;z-index:4}.resource-list{display:grid;gap:2px;max-height:260px;overflow:auto}.resource{display:flex;align-items:center;gap:8px;padding:5px 6px;background:#202729;border-radius:2px;font-size:12px}.swatch{width:13px;height:13px;border-radius:1px;border:0;flex:none}.resource .name{flex:1}.resource .count{font-variant-numeric:tabular-nums;color:#c4ceca}
 .inventory-tabs{display:flex;gap:4px;flex-wrap:wrap}.tab.active{background:#394344;border-color:var(--accent)}.inventory-view{display:none}.inventory-view.active{display:block}
-.drawer{display:none;position:fixed;inset:0;background:#0009;z-index:10;justify-content:flex-end}.drawer.open{display:flex}.drawer-card{background:#1a2022;width:min(420px,92vw);height:100%;padding:16px;overflow:auto;border-left:1px solid #3a4546}.drawer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.drawer{display:none;position:fixed;inset:0;background:#0009;z-index:10;justify-content:flex-end}.drawer.open{display:flex}.drawer-card{background:#1a2022;width:min(420px,92vw);height:100%;padding:16px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;border-left:1px solid #3a4546}.drawer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .footer-note{color:var(--muted);font-size:11px;margin-top:8px}.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#252e30;border:1px solid #566363;padding:8px 13px;border-radius:4px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}.toast.show{opacity:1}
 .mobile-resource{display:none}
 @media(max-width:850px){
