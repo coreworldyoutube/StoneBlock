@@ -42,10 +42,10 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
 </style>
 </head>
 <body>
-<header><div><div class="brand"><span>STONE</span>BLOCK</div><div class="subtitle" id="tagline">石の世界を掘り進めよう</div></div><div class="mobile-resource"><span class="stat">所持 <b id="totalMobile">0</b></span><button id="openInventoryMobile">インベントリ</button></div><button id="worldToggle" type="button">ライフワールドへ</button><button id="languageToggle" aria-label="Switch language">English</button><div class="stats"><div class="stat"><span id="minedLabel">採掘数</span> <b id="mined">0</b></div><div class="stat"><span id="totalLabel">所持資源</span> <b id="total">0</b></div></div></header>
+<header><div><div class="brand"><span>STONE</span>BLOCK</div><div class="subtitle" id="tagline">石の世界を掘り進めよう</div></div><div class="mobile-resource"><span class="stat">所持 <b id="totalMobile">0</b></span><button id="openInventoryMobile">インベントリ</button></div><button id="languageToggle" aria-label="Switch language">English</button><div class="stats"><div class="stat"><span id="minedLabel">採掘数</span> <b id="mined">0</b></div><div class="stat"><span id="totalLabel">所持資源</span> <b id="total">0</b></div></div></header>
 <main>
 <section class="panel">
- <div class="panel-head"><strong id="fieldTitle">地下フィールド</strong><div class="modebar"><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button></div></div>
+ <div class="panel-head"><div style="display:flex;align-items:center;gap:8px"><strong id="fieldTitle">地下フィールド</strong><button id="worldToggle" type="button">ライフワールドへ</button></div><div class="modebar"><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button></div></div>
  <div class="panel-body" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
   <div class="subtitle" id="hint">空気に接しているブロックをタップして1マス採掘</div>
   <div class="modebar"><label for="seedInput" class="subtitle" id="seedLabel">SEED</label><input id="seedInput" type="number" step="1" inputmode="numeric" placeholder="シード値" style="width:116px;max-width:116px"><button id="randomWorld">ランダム生成</button><button id="applySeed">指定シードで生成</button></div>
