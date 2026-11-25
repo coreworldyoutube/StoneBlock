@@ -1,0 +1,252 @@
+[
+  {
+    "id": "dirt",
+    "name": "土",
+    "name_en": "Dirt",
+    "group": "terrain",
+    "color": "#79543a",
+    "symbol": "▪",
+    "weight": 28,
+    "world": true
+  },
+  {
+    "id": "clay",
+    "name": "粘土",
+    "name_en": "Clay",
+    "group": "terrain",
+    "color": "#a66f67",
+    "symbol": "▪",
+    "weight": 12,
+    "world": true
+  },
+  {
+    "id": "sand",
+    "name": "砂",
+    "name_en": "Sand",
+    "group": "terrain",
+    "color": "#d7bd75",
+    "symbol": "▪",
+    "weight": 15,
+    "world": true
+  },
+  {
+    "id": "stone",
+    "name": "石",
+    "name_en": "Stone",
+    "group": "rock",
+    "color": "#858b91",
+    "symbol": "▪",
+    "weight": 35,
+    "world": true
+  },
+  {
+    "id": "granite",
+    "name": "花崗岩",
+    "name_en": "Granite",
+    "group": "rock",
+    "color": "#b47c76",
+    "symbol": "▪",
+    "weight": 10,
+    "world": true
+  },
+  {
+    "id": "andesite",
+    "name": "安山岩",
+    "name_en": "Andesite",
+    "group": "rock",
+    "color": "#777e82",
+    "symbol": "▪",
+    "weight": 10,
+    "world": true
+  },
+  {
+    "id": "basalt",
+    "name": "玄武岩",
+    "name_en": "Basalt",
+    "group": "rock",
+    "color": "#414a54",
+    "symbol": "▪",
+    "weight": 9,
+    "world": true
+  },
+  {
+    "id": "diorite",
+    "name": "閃緑岩",
+    "name_en": "Diorite",
+    "group": "rock",
+    "color": "#c0c4c1",
+    "symbol": "▪",
+    "weight": 8,
+    "world": true
+  },
+  {
+    "id": "copper",
+    "name": "銅鉱石",
+    "name_en": "Copper Ore",
+    "group": "metal",
+    "color": "#bd754b",
+    "symbol": "◆",
+    "weight": 7,
+    "world": true
+  },
+  {
+    "id": "iron",
+    "name": "鉄鉱石",
+    "name_en": "Iron Ore",
+    "group": "metal",
+    "color": "#b7a18b",
+    "symbol": "◆",
+    "weight": 8,
+    "world": true
+  },
+  {
+    "id": "gold",
+    "name": "金鉱石",
+    "name_en": "Gold Ore",
+    "group": "metal",
+    "color": "#e5bd42",
+    "symbol": "◆",
+    "weight": 3,
+    "world": true
+  },
+  {
+    "id": "silver",
+    "name": "銀鉱石",
+    "name_en": "Silver Ore",
+    "group": "metal",
+    "color": "#c5d1dc",
+    "symbol": "◆",
+    "weight": 2,
+    "world": true
+  },
+  {
+    "id": "platinum",
+    "name": "プラチナ鉱石",
+    "name_en": "Platinum Ore",
+    "group": "metal",
+    "color": "#9fc5cf",
+    "symbol": "◆",
+    "weight": 1,
+    "world": true
+  },
+  {
+    "id": "diamond",
+    "name": "ダイヤモンド",
+    "name_en": "Diamond",
+    "group": "gem",
+    "color": "#68e3e5",
+    "symbol": "◆",
+    "weight": 0.45,
+    "world": true
+  },
+  {
+    "id": "ruby",
+    "name": "ルビー",
+    "name_en": "Ruby",
+    "group": "gem",
+    "color": "#e34d64",
+    "symbol": "◆",
+    "weight": 0.6,
+    "world": true
+  },
+  {
+    "id": "emerald",
+    "name": "エメラルド",
+    "name_en": "Emerald",
+    "group": "gem",
+    "color": "#42c783",
+    "symbol": "◆",
+    "weight": 0.6,
+    "world": true
+  },
+  {
+    "id": "amethyst",
+    "name": "アメジスト",
+    "name_en": "Amethyst",
+    "group": "gem",
+    "color": "#a77ae8",
+    "symbol": "◆",
+    "weight": 0.7,
+    "world": true
+  },
+  {
+    "id": "sapphire",
+    "name": "サファイア",
+    "name_en": "Sapphire",
+    "group": "gem",
+    "color": "#4f83e8",
+    "symbol": "◆",
+    "weight": 0.6,
+    "world": true
+  },
+  {
+    "id": "topaz",
+    "name": "トパーズ",
+    "name_en": "Topaz",
+    "group": "gem",
+    "color": "#e9ae49",
+    "symbol": "◆",
+    "weight": 0.7,
+    "world": true
+  },
+  {
+    "id": "aquamarine",
+    "name": "アクアマリン",
+    "name_en": "Aquamarine",
+    "group": "gem",
+    "color": "#69c9d8",
+    "symbol": "◆",
+    "weight": 0.7,
+    "world": true
+  },
+  {
+    "id": "coal",
+    "name": "石炭",
+    "name_en": "Coal",
+    "group": "fuel",
+    "color": "#303337",
+    "symbol": "▪",
+    "weight": 5,
+    "world": true
+  },
+  {
+    "id": "peat",
+    "name": "泥炭",
+    "name_en": "Peat",
+    "group": "fuel",
+    "color": "#76543f",
+    "symbol": "▪",
+    "weight": 4,
+    "world": true
+  },
+  {
+    "id": "iron_ingot",
+    "name": "鉄インゴット",
+    "name_en": "Iron Ingot",
+    "group": "product",
+    "color": "#b8a58d",
+    "symbol": "▪",
+    "weight": 0,
+    "world": false
+  },
+  {
+    "id": "copper_ingot",
+    "name": "銅インゴット",
+    "name_en": "Copper Ingot",
+    "group": "product",
+    "color": "#c47b52",
+    "symbol": "▪",
+    "weight": 0,
+    "world": false
+  },
+  {
+    "id": "stone_dust",
+    "name": "石粉",
+    "name_en": "Stone Dust",
+    "group": "product",
+    "color": "#a3a6a4",
+    "symbol": "▪",
+    "weight": 0,
+    "world": false
+  }
+]
