@@ -42,34 +42,34 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
 </style>
 </head>
 <body>
-<header><div><div class="brand"><span>STONE</span>BLOCK</div><div class="subtitle">石の世界を掘り進めよう</div></div><div class="mobile-resource"><span class="stat">所持 <b id="totalMobile">0</b></span><button id="openInventoryMobile">インベントリ</button></div><div class="stats"><div class="stat">採掘数 <b id="mined">0</b></div><div class="stat">所持資源 <b id="total">0</b></div></div></header>
+<header><div><div class="brand"><span>STONE</span>BLOCK</div><div class="subtitle" id="tagline">石の世界を掘り進めよう</div></div><div class="mobile-resource"><span class="stat">所持 <b id="totalMobile">0</b></span><button id="openInventoryMobile">インベントリ</button></div><button id="languageToggle" aria-label="Switch language">English</button><div class="stats"><div class="stat"><span id="minedLabel">採掘数</span> <b id="mined">0</b></div><div class="stat"><span id="totalLabel">所持資源</span> <b id="total">0</b></div></div></header>
 <main>
 <section class="panel">
- <div class="panel-head"><strong>地下フィールド</strong><div class="modebar"><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button></div></div>
+ <div class="panel-head"><strong id="fieldTitle">地下フィールド</strong><div class="modebar"><button id="mineToggle" class="modebtn active">⛏ 採掘 ON</button></div></div>
  <div class="panel-body" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
   <div class="subtitle" id="hint">空気に接しているブロックをタップして1マス採掘</div>
-  <div class="modebar"><label for="seedInput" class="subtitle">SEED</label><input id="seedInput" type="number" step="1" inputmode="numeric" placeholder="シード値" style="width:116px;max-width:116px"><button id="randomWorld">ランダム生成</button><button id="applySeed">指定シードで生成</button></div>
+  <div class="modebar"><label for="seedInput" class="subtitle" id="seedLabel">SEED</label><input id="seedInput" type="number" step="1" inputmode="numeric" placeholder="シード値" style="width:116px;max-width:116px"><button id="randomWorld">ランダム生成</button><button id="applySeed">指定シードで生成</button></div>
  </div>
- <div class="world-wrap"><div id="world-stage"><canvas id="world" aria-label="採掘フィールド"></canvas></div></div><div id="map-panel"><div class="map-title">マップ</div><canvas id="minimap" width="150" height="150" aria-label="全体マップ"></canvas></div>
+ <div class="world-wrap"><div id="world-stage"><canvas id="world" aria-label="採掘フィールド"></canvas></div></div><div id="map-panel"><div class="map-title" id="mapTitle">マップ</div><canvas id="minimap" width="150" height="150" aria-label="全体マップ"></canvas></div>
 
 </section>
 <aside class="side">
- <section class="panel"><div class="panel-head"><strong>資源一覧</strong><button id="openInventory">インベントリを開く</button></div><div class="panel-body"><div class="resource-list" id="quickResources"></div><div class="footer-note">左右の矢印で資源リストを切り替えできます。</div><div class="modebar" style="margin-top:10px;justify-content:space-between"><button id="prevPage">← 前へ</button><span id="pageLabel" class="subtitle">1 / 3</span><button id="nextPage">次へ →</button></div></div></section>
- <section class="panel"><div class="panel-head"><strong>遊び方</strong></div><div class="panel-body"><ol style="padding-left:19px;margin:0;color:var(--muted)"><li>空洞に接しているブロックをタップすると、その1マスだけ採掘。</li><li>採掘ONならタップした1マスだけ回収。</li><li>設置OFFなら選択した資源を1マスずつ配置。</li><li>掘るほど新しい資源層に到達します。</li></ol></div></section>
+ <section class="panel"><div class="panel-head"><strong id="resourcesTitle">資源一覧</strong><button id="openInventory">インベントリを開く</button></div><div class="panel-body"><div class="resource-list" id="quickResources"></div><div class="footer-note">左右の矢印で資源リストを切り替えできます。</div><div class="modebar" style="margin-top:10px;justify-content:space-between"><button id="prevPage">← 前へ</button><span id="pageLabel" class="subtitle">1 / 3</span><button id="nextPage">次へ →</button></div></div></section>
+ <section class="panel"><div class="panel-head"><strong id="howTitle">遊び方</strong></div><div class="panel-body"><ol style="padding-left:19px;margin:0;color:var(--muted)"><li>空洞に接しているブロックをタップすると、その1マスだけ採掘。</li><li>採掘ONならタップした1マスだけ回収。</li><li>設置OFFなら選択した資源を1マスずつ配置。</li><li>掘るほど新しい資源層に到達します。</li></ol></div></section>
 </aside>
 </main>
-<div class="drawer" id="drawer"><div class="drawer-card"><div class="drawer-head"><strong style="font-size:18px">インベントリ</strong><button id="closeInventory">閉じる ✕</button></div><div class="inventory-tabs" id="tabs"><button class="tab active" data-tab="all">すべて</button><button class="tab" data-tab="terrain">地層</button><button class="tab" data-tab="rock">岩石</button><button class="tab" data-tab="metal">金属</button><button class="tab" data-tab="gem">宝石</button></div><div class="panel-body" style="padding:12px 0"><div class="resource-list" id="inventoryResources"></div><div class="footer-note">設置モードでは、ここで選択したブロックをフィールドに配置できます。</div></div></div></div>
+<div class="drawer" id="drawer"><div class="drawer-card"><div class="drawer-head"><strong id="inventoryTitle" style="font-size:18px">インベントリ</strong><button id="closeInventory">閉じる ✕</button></div><div class="inventory-tabs" id="tabs"><button class="tab active" data-tab="all">すべて</button><button class="tab" data-tab="terrain">地層</button><button class="tab" data-tab="rock">岩石</button><button class="tab" data-tab="metal">金属</button><button class="tab" data-tab="gem">宝石</button></div><div class="panel-body" style="padding:12px 0"><div class="resource-list" id="inventoryResources"></div><div class="footer-note">設置モードでは、ここで選択したブロックをフィールドに配置できます。</div></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
 (() => {
 "use strict";
 const TYPES = [
 {id:"dirt",name:"土",group:"terrain",color:"#79543a",symbol:"▪",weight:28},
-{id:"peat",name:"泥炭",group:"terrain",color:"#55402f",symbol:"▪",weight:5},
+{id:"peat",name:"泥炭",nameEn:"Peat",group:"terrain",color:"#55402f",symbol:"▪",weight:5},
 {id:"clay",name:"粘土",group:"terrain",color:"#a66f67",symbol:"▪",weight:12},
 {id:"sand",name:"砂",group:"terrain",color:"#d7bd75",symbol:"▪",weight:15},
 {id:"stone",name:"石",group:"rock",color:"#858b91",symbol:"▪",weight:35},
-{id:"coal",name:"石炭",group:"rock",color:"#303438",symbol:"◆",weight:6},
+{id:"coal",name:"石炭",nameEn:"Coal",group:"rock",color:"#303438",symbol:"◆",weight:6},
 {id:"granite",name:"花崗岩",group:"rock",color:"#b47c76",symbol:"▪",weight:10},
 {id:"andesite",name:"安山岩",group:"rock",color:"#777e82",symbol:"▪",weight:10},
 {id:"basalt",name:"玄武岩",group:"rock",color:"#414a54",symbol:"▪",weight:9},
@@ -88,7 +88,7 @@ const TYPES = [
 {id:"aquamarine",name:"アクアマリン",group:"gem",color:"#69c9d8",symbol:"✦",weight:.7}
 ];
 const W=300,H=300,EMPTY=null;
-let world=[],baseWorld=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",visibility=[];
+let world=[],baseWorld=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",visibility=[];\nlet language=localStorage.getItem("stoneblock-language")==="en"?"en":"ja";
 const REVEAL_RADIUS=5;
 function updateVisibility(){
  visibility=Array.from({length:H},()=>Array(W).fill(99));
@@ -100,6 +100,28 @@ function updateVisibility(){
  for(let y=0;y<H;y++)for(let x=0;x<W;x++)visibility[y][x]=dist[y*W+x];
 }
 const $=id=>document.getElementById(id);
+const TEXT={
+ ja:{tagline:"石の世界を掘り進めよう",inventory:"インベントリ",mined:"採掘数",total:"所持資源",field:"地下フィールド",mine:"⛏ 採掘 ON",place:"▦ 採掘 OFF（設置）",hintMine:"空気に接しているブロックをタップして1マス採掘",hintPlace:"採掘OFF：インベントリからブロックを選び、空気マスをタップして1マス設置",seed:"SEED",random:"ランダム生成",apply:"指定シードで生成",map:"マップ",resources:"資源一覧",openInventory:"インベントリを開く",prev:"← 前へ",next:"次へ →",how:"遊び方",tabs:["すべて","地層","岩石","金属","宝石"],close:"閉じる ✕",footer:"設置モードでは、ここで選択したブロックをフィールドに配置できます。",instructions:["空洞に接しているブロックをタップすると、その1マスだけ採掘。","採掘ONならタップした1マスだけ回収。","設置OFFなら選択した資源を1マスずつ配置。","掘るほど新しい資源層に到達します。"]},
+ en:{tagline:"Dig your way through the stone world",inventory:"Inventory",mined:"Blocks mined",total:"Resources",field:"Underground",mine:"⛏ Mining ON",place:"▦ Mining OFF (Place)",hintMine:"Tap a block exposed to air to mine one tile",hintPlace:"Mining OFF: choose a block in Inventory, then tap an empty tile to place one",seed:"SEED",random:"Generate random",apply:"Generate from seed",map:"Map",resources:"Resources",openInventory:"Open inventory",prev:"← Previous",next:"Next →",how:"How to play",tabs:["All","Terrain","Rocks","Metals","Gems"],close:"Close ✕",footer:"In placement mode, choose a block here and place it in the field.",instructions:["Tap a block touching an air space to mine that single tile.","When Mining is ON, only the tapped tile is collected.","When Mining is OFF, place the selected resource one tile at a time.","Dig deeper to discover new resource layers."]}
+};
+function applyLanguage(){
+ const t=TEXT[language],en=language==="en";
+ document.documentElement.lang=language;
+ $("languageToggle").textContent=en?"日本語":"English";
+ $("tagline").textContent=t.tagline;$("minedLabel").textContent=t.mined;$("totalLabel").textContent=t.total;
+ $("fieldTitle").textContent=t.field;$("seedLabel").textContent=t.seed;$("randomWorld").textContent=t.random;$("applySeed").textContent=t.apply;
+ $("mapTitle").textContent=t.map;$("resourcesTitle").textContent=t.resources;$("openInventory").textContent=t.openInventory;
+ $("howTitle").textContent=t.how;$("inventoryTitle").textContent=t.inventory;$("closeInventory").textContent=t.close;
+ $("openInventoryMobile").textContent=t.inventory;$("prevPage").textContent=t.prev;$("nextPage").textContent=t.next;
+ document.querySelectorAll(".tab").forEach((b,i)=>b.textContent=t.tabs[i]);
+ document.querySelectorAll(".side .panel")[0].querySelector(".footer-note").textContent=en?"Use the arrows to switch resource pages.":"左右の矢印で資源リストを切り替えできます。";
+ document.querySelectorAll(".side .panel")[1].querySelector("ol").innerHTML=t.instructions.map(x=>"<li>"+x+"</li>").join("");
+ document.querySelector("#drawer .footer-note").textContent=t.footer;
+ $("mineToggle").textContent=mode==="mine"?t.mine:t.place;
+ $("hint").textContent=mode==="mine"?t.hintMine:t.hintPlace;
+ renderResources();
+}
+
 const typeById=id=>TYPES.find(t=>t.id===id);
 // Seeded 2D gradient Perlin noise and fractal Brownian motion.
 let worldSeed=0;
@@ -246,7 +268,7 @@ function interact(x,y){
 }
 function resourceRow(t){
  const row=document.createElement("div");row.className="resource";row.innerHTML=`<span class="swatch" style="background:${t.color}"></span><span class="name">${t.name}</span><b class="count">${inventory[t.id]||0}</b>`;
- row.addEventListener("click",()=>{selected=t.id;document.querySelectorAll(".resource").forEach(e=>e.style.outline="");row.style.outline="1px solid #a6b5b2";$("hint").textContent="設置対象："+t.name;saveWorld(false);});return row;
+ row.addEventListener("click",()=>{selected=t.id;document.querySelectorAll(".resource").forEach(e=>e.style.outline="");row.style.outline="1px solid #a6b5b2";$("hint").textContent=(language==="en"?"Selected for placement: ":"設置対象：")+(language==="en"?(t.nameEn||t.name):t.name);saveWorld(false);});return row;
 }
 function renderResources(){
  const start=page*7,items=TYPES.slice(start,start+7);$("quickResources").innerHTML="";items.forEach(t=>$("quickResources").appendChild(resourceRow(t)));
@@ -260,7 +282,7 @@ function setMode(next){
  $("hint").textContent=mode==="mine"?"空気に接しているブロックをタップして採掘":"採掘OFF：インベントリからブロックを選び、空気マスをタップして1マス設置";render();
 }
 function toast(s){const e=$("toast");e.textContent=s;e.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove("show"),1700);}
-$("mineToggle").onclick=()=>{setMode(mode==="mine"?"place":"mine");saveWorld(false);};
+$("mineToggle").onclick=()=>{setMode(mode==="mine"?"place":"mine");saveWorld(false);};\n$("languageToggle").onclick=()=>{language=language==="ja"?"en":"ja";localStorage.setItem("stoneblock-language",language);applyLanguage();};
 $("prevPage").onclick=()=>{page=Math.max(0,page-1);renderResources();};$("nextPage").onclick=()=>{page=Math.min(Math.ceil(TYPES.length/7)-1,page+1);renderResources();};
 $("openInventory").onclick=$("openInventoryMobile").onclick=()=>{$("drawer").classList.add("open");};
 $("closeInventory").onclick=()=> $("drawer").classList.remove("open");
@@ -279,7 +301,7 @@ loadInventory();
   const rect=wrap.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left+wrap.scrollLeft)/36),y=Math.floor((e.clientY-rect.top+wrap.scrollTop)/36);
   if(x>=0&&y>=0&&x<W&&y<H){if(mode==="mine"){if(exposed(x,y))interact(x,y);}else if(isAir(x,y)&&adjacentToSolid(x,y))interact(x,y);}
  });
- window.addEventListener("resize",drawWorld);window.addEventListener("pagehide",()=>saveWorld(false));drawWorld();
+ window.addEventListener("resize",drawWorld);window.addEventListener("pagehide",()=>saveWorld(false));applyLanguage();drawWorld();
 })();
 </script>
 </body>
