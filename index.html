@@ -148,7 +148,7 @@ function saveWorld(show = true) {
 
 function loadWorld(show=true){try{
  const raw=localStorage.getItem(SAVE_KEY);if(!raw){if(show)toast("保存データがありません");return false;}
- const d=JSON.parse(raw);if(![1,2,3,4,5,SAVE_FORMAT_VERSION].includes(d.version))throw new Error("invalid save");
+ const d=JSON.parse(raw);if(!Number.isInteger(d.version)||d.version<1||d.version>SAVE_FORMAT_VERSION)throw new Error("unsupported save format");
  worldSeed=Number.isSafeInteger(d.seed)?d.seed:0;baseWorld=generateBase();world=baseWorld.map(row=>row.slice());
  if(d.version===1){
   if(!Array.isArray(d.world)||d.world.length!==H||d.world.some(row=>!Array.isArray(row)||row.length!==W))throw new Error("invalid legacy save");
