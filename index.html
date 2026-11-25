@@ -2,11 +2,11 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>StoneBlock — 地下採掘</title>
 <style>
 :root{color-scheme:dark;--bg:#101315;--panel:#1a2022;--panel2:#252d2f;--line:#343d3f;--text:#e4e9e7;--muted:#929e99;--accent:#a6b5b2;--good:#8fba9a}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}main,main>section,.world-wrap,#world{overscroll-behavior:none;touch-action:none}
 button,input{font:inherit}button{cursor:pointer;color:inherit;background:#252d2f;border:1px solid #3a4546;border-radius:4px;padding:7px 10px}button:hover{background:#303a3b;border-color:#687675}button:disabled{opacity:.35;cursor:not-allowed}
 header{height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-bottom:1px solid #30393a;background:#171d1f;position:relative;z-index:5}
 .brand{font-size:17px;font-weight:800;letter-spacing:.08em}.brand span{color:var(--accent)}.subtitle{color:var(--muted);font-size:11px}
@@ -33,7 +33,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
  main>section>.panel-head{top:7px;left:7px;padding:5px 6px}
  main>section>.panel-body{top:auto;right:7px;bottom:7px;padding:0}
  main>section>.panel-body .modebar{gap:4px}
- #world{width:100vw;height:calc(100dvh - 48px)}
+ #world{width:100%;height:100%;left:0;top:0;right:0;bottom:0}
  .side{display:none}.mobile-resource{display:flex;gap:5px;align-items:center}.mobile-resource .stat{display:none}
 }
 </style>
@@ -281,8 +281,8 @@ if(!hasSavedWorld){cameraX=(W*36-wrap.clientWidth)/2;cameraY=(H*36-wrap.clientHe
 let saveCameraTimer,drag=null,skipWorldClick=false;
 $("minimap").addEventListener("click",e=>{const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W*36,y=(e.clientY-r.top)/r.height*H*36;cameraX=x-wrap.clientWidth/2;cameraY=y-wrap.clientHeight/2;clampCamera();render();saveWorld(false);});
 const canvas=$("world");
-canvas.addEventListener("pointerdown",e=>{if(e.button!==0&&e.pointerType!=="touch")return;drag={id:e.pointerId,startX:e.clientX,startY:e.clientY,lastX:e.clientX,lastY:e.clientY,moved:false};canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener("pointermove",e=>{if(!drag||drag.id!==e.pointerId)return;const dx=e.clientX-drag.lastX,dy=e.clientY-drag.lastY;if(!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>5)drag.moved=true;if(drag.moved){cameraX-=dx;cameraY-=dy;clampCamera();render();drag.lastX=e.clientX;drag.lastY=e.clientY;}});
+canvas.addEventListener("pointerdown",e=>{if(e.button!==0&&e.pointerType!=="touch")return;if(e.cancelable)e.preventDefault();drag={id:e.pointerId,startX:e.clientX,startY:e.clientY,lastX:e.clientX,lastY:e.clientY,moved:false};canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener("pointermove",e=>{if(!drag||drag.id!==e.pointerId)return;if(e.cancelable)e.preventDefault();const dx=e.clientX-drag.lastX,dy=e.clientY-drag.lastY;if(!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>5)drag.moved=true;if(drag.moved){cameraX-=dx;cameraY-=dy;clampCamera();render();drag.lastX=e.clientX;drag.lastY=e.clientY;}});
 const finishDrag=e=>{if(!drag||drag.id!==e.pointerId)return;if(drag.moved){skipWorldClick=true;clearTimeout(saveCameraTimer);saveCameraTimer=setTimeout(()=>saveWorld(false),250);}drag=null;};
 canvas.addEventListener("pointerup",finishDrag);canvas.addEventListener("pointercancel",finishDrag);
 canvas.addEventListener("click",e=>{if(skipWorldClick){skipWorldClick=false;return;}const rect=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left+cameraX)/36),y=Math.floor((e.clientY-rect.top+cameraY)/36);if(x>=0&&y>=0&&x<W&&y<H)interact(x,y);});
