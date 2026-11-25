@@ -283,7 +283,8 @@ function setMode(next){
  $("hint").textContent=mode==="mine"?TEXT[language].hintMine:TEXT[language].hintPlace;$("mineToggle").textContent=mode==="mine"?TEXT[language].mine:TEXT[language].place;render();
 }
 function toast(s){const e=$("toast");e.textContent=s;e.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove("show"),1700);}
-$("mineToggle").onclick=()=>{setMode(mode==="mine"?"place":"mine");saveWorld(false);};\n$("languageToggle").onclick=()=>{language=language==="ja"?"en":"ja";localStorage.setItem("stoneblock-language",language);applyLanguage();};
+$("mineToggle").onclick=()=>{setMode(mode==="mine"?"place":"mine");saveWorld(false);};
+$("languageToggle").onclick=()=>{language=language==="ja"?"en":"ja";localStorage.setItem("stoneblock-language",language);applyLanguage();};
 $("prevPage").onclick=()=>{page=Math.max(0,page-1);renderResources();};$("nextPage").onclick=()=>{page=Math.min(Math.ceil(TYPES.length/7)-1,page+1);renderResources();};
 $("openInventory").onclick=$("openInventoryMobile").onclick=()=>{$("drawer").classList.add("open");};
 $("closeInventory").onclick=()=> $("drawer").classList.remove("open");
