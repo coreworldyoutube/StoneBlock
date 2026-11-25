@@ -442,15 +442,14 @@ loadInventory();
  let saveScrollTimer;wrap.addEventListener("scroll",()=>{drawWorld();drawMinimap();clearTimeout(saveScrollTimer);saveScrollTimer=setTimeout(()=>saveWorld(false),500);},{passive:true});
  $("minimap").addEventListener("click",e=>{const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W*36,y=(e.clientY-r.top)/r.height*H*36;wrap.scrollLeft=Math.max(0,x-wrap.clientWidth/2);wrap.scrollTop=Math.max(0,y-wrap.clientHeight/2);drawWorld();drawMinimap();});
  $("world").addEventListener("click",e=>{
-  const canvasRect=$("world").getBoundingClientRect();
-  const localX=e.clientX-canvasRect.left,localY=e.clientY-canvasRect.top;
-  if(localX<0||localY<0||localX>=canvasRect.width||localY>=canvasRect.height)return;
+  // Resolve the clicked cell from the scroll container, which is also the
+  // coordinate origin used by drawWorld(). Do not use the sticky canvas rect:
+  // its visual position can differ from the scrolled world coordinates.
+  const rect=wrap.getBoundingClientRect();
+  const localX=e.clientX-rect.left,localY=e.clientY-rect.top;
+  if(localX<0||localY<0||localX>=wrap.clientWidth||localY>=wrap.clientHeight)return;
   const x=Math.floor((localX+wrap.scrollLeft)/36),y=Math.floor((localY+wrap.scrollTop)/36);
-  if(x>=0&&y>=0&&x<W&&y<H){
-   // Both worlds use the same click route. interact() alone decides whether
-   // the tile can be mined or placed; placement has no adjacency requirement.
-   interact(x,y);
-  }
+  if(x>=0&&y>=0&&x<W&&y<H)interact(x,y);
  });
  window.addEventListener("resize",drawWorld);window.addEventListener("pagehide",()=>saveWorld(false));applyLanguage();drawWorld();
 })();
