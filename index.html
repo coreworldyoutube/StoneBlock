@@ -50,7 +50,7 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
   <div class="subtitle" id="hint">空気に接しているブロックをタップして1マス採掘</div>
   <div class="modebar"><label for="seedInput" class="subtitle">SEED</label><input id="seedInput" type="number" step="1" inputmode="numeric" placeholder="シード値" style="width:116px;max-width:116px"><button id="randomWorld">ランダム生成</button><button id="applySeed">指定シードで生成</button></div>
  </div>
- <div class="world-wrap"><div id="world-stage"><canvas id="world" aria-label="採掘フィールド"></canvas></div></div><div id="map-panel"><div class="map-title">MAP</div><canvas id="minimap" width="150" height="150" aria-label="全体マップ"></canvas></div>
+ <div class="world-wrap"><div id="world-stage"><canvas id="world" aria-label="採掘フィールド"></canvas></div></div><div id="map-panel"><div class="map-title">マップ</div><canvas id="minimap" width="150" height="150" aria-label="全体マップ"></canvas></div>
 
 </section>
 <aside class="side">
@@ -65,9 +65,11 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
 "use strict";
 const TYPES = [
 {id:"dirt",name:"土",group:"terrain",color:"#79543a",symbol:"▪",weight:28},
+{id:"peat",name:"泥炭",group:"terrain",color:"#55402f",symbol:"▪",weight:5},
 {id:"clay",name:"粘土",group:"terrain",color:"#a66f67",symbol:"▪",weight:12},
 {id:"sand",name:"砂",group:"terrain",color:"#d7bd75",symbol:"▪",weight:15},
 {id:"stone",name:"石",group:"rock",color:"#858b91",symbol:"▪",weight:35},
+{id:"coal",name:"石炭",group:"rock",color:"#303438",symbol:"◆",weight:6},
 {id:"granite",name:"花崗岩",group:"rock",color:"#b47c76",symbol:"▪",weight:10},
 {id:"andesite",name:"安山岩",group:"rock",color:"#777e82",symbol:"▪",weight:10},
 {id:"basalt",name:"玄武岩",group:"rock",color:"#414a54",symbol:"▪",weight:9},
@@ -155,11 +157,15 @@ function weightedType(depth,x,y){
  const cave=fbm((x+caveWarpX*8)*.042,(y+caveWarpY*8)*.042,3);
  if(y>28&&cave>.64&&detail<.58)return EMPTY;
  // Separate low-frequency fields make deposits form connected, irregular veins.
+ const peatVein=fbm(x*.065+271,y*.065-143,3);
+ const coalVein=fbm(x*.082-193,y*.082+101,3);
  const copperVein=fbm(x*.072+83,y*.072-29,3);
  const ironVein=fbm(x*.078-151,y*.078+67,3);
  const preciousVein=fbm(x*.105+211,y*.105-173,3);
  const gemVein=fbm(x*.145-307,y*.145+229,3);
  const local=fbm(x*.19+17,y*.19-91,2);
+ if(y>12&&y<42&&peatVein>.48&&local<.30)return "peat";
+ if(y>28&&y<220&&coalVein<-.48&&local>-.30)return "coal";
  if(y>34&&copperVein>.43&&local>-.24)return "copper";
  if(y>42&&ironVein<-.43&&local<.25)return "iron";
  if(vertical>.25&&preciousVein>.57&&local>-.08)return "gold";
