@@ -64,28 +64,28 @@ select,input[type=number]{background:#151c1e;color:var(--text);border:1px solid 
 (() => {
 "use strict";
 const TYPES = [
-{id:"dirt",name:"土",group:"terrain",color:"#79543a",symbol:"▪",weight:28},
+{id:"dirt",name:"土",nameEn:"Dirt",group:"terrain",color:"#79543a",symbol:"▪",weight:28},
 {id:"peat",name:"泥炭",nameEn:"Peat",group:"terrain",color:"#55402f",symbol:"▪",weight:5},
-{id:"clay",name:"粘土",group:"terrain",color:"#a66f67",symbol:"▪",weight:12},
-{id:"sand",name:"砂",group:"terrain",color:"#d7bd75",symbol:"▪",weight:15},
-{id:"stone",name:"石",group:"rock",color:"#858b91",symbol:"▪",weight:35},
+{id:"clay",name:"粘土",nameEn:"Clay",group:"terrain",color:"#a66f67",symbol:"▪",weight:12},
+{id:"sand",name:"砂",nameEn:"Sand",group:"terrain",color:"#d7bd75",symbol:"▪",weight:15},
+{id:"stone",name:"石",nameEn:"Stone",group:"rock",color:"#858b91",symbol:"▪",weight:35},
 {id:"coal",name:"石炭",nameEn:"Coal",group:"rock",color:"#303438",symbol:"◆",weight:6},
-{id:"granite",name:"花崗岩",group:"rock",color:"#b47c76",symbol:"▪",weight:10},
-{id:"andesite",name:"安山岩",group:"rock",color:"#777e82",symbol:"▪",weight:10},
-{id:"basalt",name:"玄武岩",group:"rock",color:"#414a54",symbol:"▪",weight:9},
-{id:"diorite",name:"閃緑岩",group:"rock",color:"#c0c4c1",symbol:"▪",weight:8},
-{id:"copper",name:"銅鉱石",group:"metal",color:"#bd754b",symbol:"◆",weight:7},
-{id:"iron",name:"鉄鉱石",group:"metal",color:"#b7a18b",symbol:"◆",weight:8},
-{id:"gold",name:"金鉱石",group:"metal",color:"#e5bd42",symbol:"◆",weight:3},
-{id:"silver",name:"銀鉱石",group:"metal",color:"#c5d1dc",symbol:"◆",weight:2},
-{id:"platinum",name:"プラチナ鉱石",group:"metal",color:"#9fc5cf",symbol:"◆",weight:1},
-{id:"diamond",name:"ダイヤモンド",group:"gem",color:"#68e3e5",symbol:"✦",weight:.45},
-{id:"ruby",name:"ルビー",group:"gem",color:"#e34d64",symbol:"✦",weight:.6},
-{id:"emerald",name:"エメラルド",group:"gem",color:"#42c783",symbol:"✦",weight:.6},
-{id:"amethyst",name:"アメジスト",group:"gem",color:"#a77ae8",symbol:"✦",weight:.7},
-{id:"sapphire",name:"サファイア",group:"gem",color:"#4f83e8",symbol:"✦",weight:.6},
-{id:"topaz",name:"トパーズ",group:"gem",color:"#e9ae49",symbol:"✦",weight:.7},
-{id:"aquamarine",name:"アクアマリン",group:"gem",color:"#69c9d8",symbol:"✦",weight:.7}
+{id:"granite",name:"花崗岩",nameEn:"Granite",group:"rock",color:"#b47c76",symbol:"▪",weight:10},
+{id:"andesite",name:"安山岩",nameEn:"Andesite",group:"rock",color:"#777e82",symbol:"▪",weight:10},
+{id:"basalt",name:"玄武岩",nameEn:"Basalt",group:"rock",color:"#414a54",symbol:"▪",weight:9},
+{id:"diorite",name:"閃緑岩",nameEn:"Diorite",group:"rock",color:"#c0c4c1",symbol:"▪",weight:8},
+{id:"copper",name:"銅鉱石",nameEn:"Copper Ore",group:"metal",color:"#bd754b",symbol:"◆",weight:7},
+{id:"iron",name:"鉄鉱石",nameEn:"Iron Ore",group:"metal",color:"#b7a18b",symbol:"◆",weight:8},
+{id:"gold",name:"金鉱石",nameEn:"Gold Ore",group:"metal",color:"#e5bd42",symbol:"◆",weight:3},
+{id:"silver",name:"銀鉱石",nameEn:"Silver Ore",group:"metal",color:"#c5d1dc",symbol:"◆",weight:2},
+{id:"platinum",name:"プラチナ鉱石",nameEn:"Platinum Ore",group:"metal",color:"#9fc5cf",symbol:"◆",weight:1},
+{id:"diamond",name:"ダイヤモンド",nameEn:"Diamond",group:"gem",color:"#68e3e5",symbol:"✦",weight:.45},
+{id:"ruby",name:"ルビー",nameEn:"Ruby",group:"gem",color:"#e34d64",symbol:"✦",weight:.6},
+{id:"emerald",name:"エメラルド",nameEn:"Emerald",group:"gem",color:"#42c783",symbol:"✦",weight:.6},
+{id:"amethyst",name:"アメジスト",nameEn:"Amethyst",group:"gem",color:"#a77ae8",symbol:"✦",weight:.7},
+{id:"sapphire",name:"サファイア",nameEn:"Sapphire",group:"gem",color:"#4f83e8",symbol:"✦",weight:.6},
+{id:"topaz",name:"トパーズ",nameEn:"Topaz",group:"gem",color:"#e9ae49",symbol:"✦",weight:.7},
+{id:"aquamarine",name:"アクアマリン",nameEn:"Aquamarine",group:"gem",color:"#69c9d8",symbol:"✦",weight:.7}
 ];
 const W=300,H=300,EMPTY=null;
 let world=[],baseWorld=[],inventory={},mode="mine",selected="dirt",mined=0,page=0,invTab="all",visibility=[];\nlet language=localStorage.getItem("stoneblock-language")==="en"?"en":"ja";
