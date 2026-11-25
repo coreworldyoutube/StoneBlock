@@ -160,14 +160,6 @@ function generateLifeBase(){
  return map;
 }
 function saveInventory(){try{localStorage.setItem(INVENTORY_KEY(),JSON.stringify(inventory));return true;}catch(e){toast("インベントリを保存できませんでした");return false;}}
-function ensureLifeStarterKit(){
- const key="stoneblock-life-starter-kit-v1";
- if(localStorage.getItem(key))return;
- const kit={wood:20,stone:30,coal:12,iron:8,copper:8};
- for(const [id,count] of Object.entries(kit))inventory[id]=(inventory[id]||0)+count;
- saveInventory();localStorage.setItem(key,"1");
- toast("ライフワールドの初期資材を受け取りました");
-}
 function loadInventory(){try{const raw=localStorage.getItem(INVENTORY_KEY());const saved=raw?JSON.parse(raw):null;inventory={};for(const t of TYPES)inventory[t.id]=Number(saved?.[t.id])||0;}catch(e){inventory={};for(const t of TYPES)inventory[t.id]=0;}}
 function saveWorld(show=true){try{const wrap=document.querySelector(".world-wrap"),changes=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(world[y][x]!==baseWorld[y][x])changes.push([i,world[y][x]]);}const data={version:4,seed:worldSeed,changes,mined,selected,mode,scrollLeft:wrap.scrollLeft,scrollTop:wrap.scrollTop};localStorage.setItem(SAVE_KEY(),JSON.stringify(data));if(show)toast("ワールドを保存しました（変更箇所 "+changes.length+"）");return true;}catch(e){toast("保存できませんでした（容量・ブラウザ設定を確認）");return false;}}
 function loadWorld(show=true){try{
@@ -341,7 +333,7 @@ function interact(x,y){
   world[y][x]=EMPTY;inventory[id]=(inventory[id]||0)+1;mined++;updateVisibility();
   render();saveInventory();saveWorld(false);toast("1マス採掘しました");
  }else{
-  if(!isAir(x,y)||!adjacentToSolid(x,y)){toast("ブロックに接している空気マスを選んでください");return;}
+  if(!isAir(x,y)){toast("空いているマスを選んでください");return;}
   const id=selected,t=typeById(id);
   if(inventory[id]<1){toast(t.name+"が足りません（所持 0 個）");return;}
   world[y][x]=id;inventory[id]--;updateVisibility();render();saveInventory();saveWorld(false);toast(t.name+"を1マス設置しました");
@@ -390,7 +382,7 @@ function setMode(next){
 }
 function toast(s){const e=$("toast");e.textContent=s;e.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove("show"),1700);}
 $("mineToggle").onclick=()=>{setMode(mode==="mine"?"place":"mine");saveWorld(false);};
-$("worldToggle").onclick=()=>{saveWorld(false);saveInventory();const wrap=document.querySelector(".world-wrap");activeWorld=activeWorld==="underworld"?"life":"underworld";loadInventory();if(activeWorld==="life")ensureLifeStarterKit();const loaded=loadWorld(false);if(!loaded){if(activeWorld==="life"){worldSeed=0;baseWorld=generateLifeBase();world=baseWorld.map(row=>row.slice());mined=0;selected="conveyor";setMode("place");}else{generate();setMode("mine");}wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;saveWorld(false);}applyLanguage();render();toast(activeWorld==="life"?"ライフワールドに移動しました":"アンダーワールドに移動しました");};
+$("worldToggle").onclick=()=>{saveWorld(false);saveInventory();const wrap=document.querySelector(".world-wrap");activeWorld=activeWorld==="underworld"?"life":"underworld";loadInventory();const loaded=loadWorld(false);if(!loaded){if(activeWorld==="life"){worldSeed=0;baseWorld=generateLifeBase();world=baseWorld.map(row=>row.slice());mined=0;selected="conveyor";setMode("place");}else{generate();setMode("mine");}wrap.scrollLeft=(wrap.scrollWidth-wrap.clientWidth)/2;wrap.scrollTop=(wrap.scrollHeight-wrap.clientHeight)/2;saveWorld(false);}applyLanguage();render();toast(activeWorld==="life"?"ライフワールドに移動しました":"アンダーワールドに移動しました");};
 $("languageToggle").onclick=()=>{language=language==="ja"?"en":"ja";localStorage.setItem("stoneblock-language",language);applyLanguage();};
 $("prevPage").onclick=()=>{page=Math.max(0,page-1);renderResources();};$("nextPage").onclick=()=>{page=Math.min(Math.ceil(TYPES.length/7)-1,page+1);renderResources();};
 $("openInventory").onclick=$("openInventoryMobile").onclick=()=>{$("drawer").classList.add("open");};
@@ -408,7 +400,7 @@ loadInventory();
  $("world").addEventListener("click",e=>{
   if(e.target!==$("world"))return;
   const rect=wrap.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left+wrap.scrollLeft)/36),y=Math.floor((e.clientY-rect.top+wrap.scrollTop)/36);
-  if(x>=0&&y>=0&&x<W&&y<H){if(activeWorld==="life")interact(x,y);else if(mode==="mine"){if(exposed(x,y))interact(x,y);}else if(isAir(x,y)&&adjacentToSolid(x,y))interact(x,y);}
+  if(x>=0&&y>=0&&x<W&&y<H){if(activeWorld==="life")interact(x,y);else if(mode==="mine"){if(exposed(x,y))interact(x,y);}else if(isAir(x,y))interact(x,y);}
  });
  window.addEventListener("resize",drawWorld);window.addEventListener("pagehide",()=>saveWorld(false));applyLanguage();drawWorld();
 })();
