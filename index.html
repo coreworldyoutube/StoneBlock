@@ -267,7 +267,7 @@ function interact(x,y){
  }
 }
 function resourceRow(t){
- const row=document.createElement("div");row.className="resource";row.innerHTML=`<span class="swatch" style="background:${t.color}"></span><span class="name">${t.name}</span><b class="count">${inventory[t.id]||0}</b>`;
+ const row=document.createElement("div");row.className="resource";row.innerHTML=`<span class="swatch" style="background:${t.color}"></span><span class="name">${language==="en"?(t.nameEn||t.name):t.name}</span><b class="count">${inventory[t.id]||0}</b>`;
  row.addEventListener("click",()=>{selected=t.id;document.querySelectorAll(".resource").forEach(e=>e.style.outline="");row.style.outline="1px solid #a6b5b2";$("hint").textContent=(language==="en"?"Selected for placement: ":"設置対象：")+(language==="en"?(t.nameEn||t.name):t.name);saveWorld(false);});return row;
 }
 function renderResources(){
