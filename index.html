@@ -152,6 +152,7 @@ function generateLifeBase(){
   const moisture=fbm(x*.035+71,y*.035-22,3),ore=fbm(x*.09-31,y*.09+88,3),forest=fbm(x*.055+113,y*.055+9,3);
   if(moisture>.58&&fbm(x*.07+8,y*.07-17,2)>.02)map[y][x]="water";
   else if(ore>.66&&forest<.25)map[y][x]=hash2(x+71,y-23)>.5?"iron":"coal";
+  else if(ore<-.62&&forest<.25)map[y][x]=hash2(x-31,y+17)>.5?"stone":"copper";
   else if(forest>.48&&hash2(x+19,y+43)>.55)map[y][x]="wood";
   else if(moisture>.42)map[y][x]="sand";
  }
@@ -306,7 +307,7 @@ function interact(x,y){
  if(activeWorld==="life"){
   const id=world[y][x];
   if(mode==="mine"){
-   const drops={wood:"wood",iron:"iron",coal:"coal"};
+   const drops={wood:"wood",iron:"iron",coal:"coal",stone:"stone",copper:"copper"};
    if(!id||!drops[id]){toast("ここには採掘できる資源がありません");return;}
    inventory[drops[id]]=(inventory[drops[id]]||0)+1;world[y][x]=EMPTY;mined++;saveInventory();saveWorld(false);render();toast(typeById(drops[id]).name+"を1個回収");return;
   }
@@ -339,10 +340,12 @@ function simulateLifeWorld(){
     const nx=x+dx,ny=y+dy;
     if(nx<0||ny<0||nx>=W||ny>=H)continue;
     const ore=world[ny][nx];
-    if(ore==="iron"||ore==="coal"){world[ny][nx]=EMPTY;inventory[ore]=(inventory[ore]||0)+1;changed=true;break;}
+    if(ore==="iron"||ore==="coal"||ore==="copper"||ore==="stone"){world[ny][nx]=EMPTY;inventory[ore]=(inventory[ore]||0)+1;changed=true;break;}
    }
   }else if(id==="furnace"&&(inventory.iron||0)>0&&(inventory.coal||0)>0){
    inventory.iron--;inventory.coal--;inventory.iron_ingot=(inventory.iron_ingot||0)+1;changed=true;
+  }else if(id==="furnace"&&(inventory.copper||0)>0&&(inventory.coal||0)>0){
+   inventory.copper--;inventory.coal--;inventory.copper_ingot=(inventory.copper_ingot||0)+1;changed=true;
   }
  }
  if(changed){saveInventory();saveWorld(false);render();toast("工場が資源を生産しました");}
