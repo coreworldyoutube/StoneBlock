@@ -274,7 +274,13 @@ function drawWorld(){
   const id=world[y][x],px=x*cell-sx,py=y*cell-sy,distance=visibility[y]?.[x]??99;
   if(id===EMPTY)continue;
   if(activeWorld==="underworld"&&distance>REVEAL_RADIUS)continue;
-  const t=typeById(id),darkness=Math.max(0,Math.min(.96,(distance-1)/5));ctx.globalAlpha=1-darkness;ctx.fillStyle=t.color;ctx.fillRect(px,py,cell,cell);
+  const t=typeById(id),darkness=Math.max(0,Math.min(.96,(distance-1)/5));ctx.globalAlpha=1-darkness;
+  if(activeWorld==="life"&&id==="water"){ctx.fillStyle="#4baddb";ctx.fillRect(px,py,cell,cell);ctx.fillStyle="#9adcf0";ctx.fillRect(px+5,py+7,cell*.45,3);}
+  else if(activeWorld==="life"&&id==="wood"){ctx.fillStyle="#397b45";ctx.beginPath();ctx.arc(px+18,py+15,13,0,Math.PI*2);ctx.fill();ctx.fillStyle="#765034";ctx.fillRect(px+15,py+20,6,13);}
+  else if(activeWorld==="life"&&id==="sand"){ctx.fillStyle="#d7bd75";ctx.fillRect(px,py,cell,cell);}
+  else if(activeWorld==="life"&&(id==="iron"||id==="coal")){ctx.fillStyle="#9b8d76";ctx.fillRect(px+4,py+4,cell-8,cell-8);ctx.fillStyle=t.color;ctx.fillRect(px+10,py+10,7,7);ctx.fillRect(px+21,py+20,6,6);}
+  else{ctx.fillStyle=t.color;ctx.fillRect(px,py,cell,cell);}
+  if(activeWorld==="life"&&t.group==="building"){ctx.strokeStyle="#26302b";ctx.lineWidth=2;ctx.strokeRect(px+3,py+3,cell-6,cell-6);ctx.fillStyle="#1f2924";ctx.font="bold 19px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(t.symbol,px+18,py+18);}
   // Fine, irregular mineral/soil grain: subtle pixel clusters, no tile outlines.
   let seed=((x*374761393)^(y*668265263)^(id.length*2246822519))>>>0;
   const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
@@ -323,6 +329,25 @@ function interact(x,y){
   world[y][x]=id;inventory[id]--;updateVisibility();render();saveInventory();saveWorld(false);toast(t.name+"を1マス設置しました");
  }
 }
+function simulateLifeWorld(){
+ if(activeWorld!=="life")return;
+ let changed=false;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+  const id=world[y][x];
+  if(id==="miner"){
+   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+    const nx=x+dx,ny=y+dy;
+    if(nx<0||ny<0||nx>=W||ny>=H)continue;
+    const ore=world[ny][nx];
+    if(ore==="iron"||ore==="coal"){world[ny][nx]=EMPTY;inventory[ore]=(inventory[ore]||0)+1;changed=true;break;}
+   }
+  }else if(id==="furnace"&&(inventory.iron||0)>0&&(inventory.coal||0)>0){
+   inventory.iron--;inventory.coal--;inventory.iron_ingot=(inventory.iron_ingot||0)+1;changed=true;
+  }
+ }
+ if(changed){saveInventory();saveWorld(false);render();toast("工場が資源を生産しました");}
+}
+setInterval(simulateLifeWorld,5000);
 function resourceRow(t){
  const row=document.createElement("div");row.className="resource";
  const swatch=document.createElement("span");swatch.className="swatch";swatch.style.background=t.color;
