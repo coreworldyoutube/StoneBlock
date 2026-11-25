@@ -178,7 +178,7 @@ function loadWorld(show=true){try{
   for(const change of d.changes){if(!Array.isArray(change)||change.length!==2)continue;const i=change[0],id=change[1];if(!Number.isInteger(i)||i<0||i>=W*H||(id!==null&&!typeById(id)))continue;world[Math.floor(i/W)][i%W]=id;}
  }
  if(d.version<4&&!localStorage.getItem(INVENTORY_KEY())){inventory={};for(const t of TYPES)inventory[t.id]=Number(d.inventory?.[t.id])||0;saveInventory();}
- mined=Number(d.mined)||0;selected=typeById(d.selected)?d.selected:"dirt";mode=d.mode==="place"?"place":"mine";
+ mined=Number(d.mined)||0;selected=typeById(d.selected)?d.selected:"dirt";if(activeWorld==="life"&&!BUILD_COST[selected])selected="conveyor";mode=d.mode==="place"?"place":"mine";
  updateVisibility();setMode(mode);render();$("seedInput").value=String(worldSeed);
  const wrap=document.querySelector(".world-wrap");wrap.scrollLeft=Number(d.scrollLeft)||0;wrap.scrollTop=Number(d.scrollTop)||0;
  drawWorld();drawMinimap();if(show)toast("保存したワールドを読み込みました");return true;
@@ -314,7 +314,28 @@ function drawWorld(){
   ctx.globalAlpha=1;
  }
 }
-function drawMinimap(){const c=$("minimap"),ctx=c.getContext("2d"),sx=c.width/W,sy=c.height/H;ctx.fillStyle="#090d0e";ctx.fillRect(0,0,c.width,c.height);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=visibility[y]?.[x]??99;if(d>REVEAL_RADIUS||world[y][x]===EMPTY)continue;ctx.globalAlpha=1-Math.max(0,(d-1)/5);ctx.fillStyle=typeById(world[y][x]).color;ctx.fillRect(x*sx,y*sy,Math.ceil(sx),Math.ceil(sy));}ctx.globalAlpha=1;const wrap=document.querySelector(".world-wrap"),cell=36;ctx.strokeStyle="#f0f3f2";ctx.lineWidth=1;ctx.strokeRect(wrap.scrollLeft/(W*cell)*c.width,wrap.scrollTop/(H*cell)*c.height,wrap.clientWidth/(W*cell)*c.width,wrap.clientHeight/(H*cell)*c.height);}
+function drawMinimap(){
+ const c=$("minimap"),ctx=c.getContext("2d"),sx=c.width/W,sy=c.height/H;
+ if(activeWorld==="life"){
+  ctx.fillStyle="#75b94f";ctx.fillRect(0,0,c.width,c.height);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+   const id=world[y][x];if(id===EMPTY)continue;
+   ctx.globalAlpha=1;ctx.fillStyle=typeById(id).color;
+   ctx.fillRect(x*sx,y*sy,Math.max(1,Math.ceil(sx)),Math.max(1,Math.ceil(sy)));
+  }
+ }else{
+  ctx.fillStyle="#090d0e";ctx.fillRect(0,0,c.width,c.height);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+   const d=visibility[y]?.[x]??99;if(d>REVEAL_RADIUS||world[y][x]===EMPTY)continue;
+   ctx.globalAlpha=1-Math.max(0,(d-1)/5);ctx.fillStyle=typeById(world[y][x]).color;
+   ctx.fillRect(x*sx,y*sy,Math.ceil(sx),Math.ceil(sy));
+  }
+ }
+ ctx.globalAlpha=1;
+ const wrap=document.querySelector(".world-wrap"),cell=36;
+ ctx.strokeStyle="#f0f3f2";ctx.lineWidth=1;
+ ctx.strokeRect(wrap.scrollLeft/(W*cell)*c.width,wrap.scrollTop/(H*cell)*c.height,wrap.clientWidth/(W*cell)*c.width,wrap.clientHeight/(H*cell)*c.height);
+}
 function render(){
  drawWorld();drawMinimap();
  $("mined").textContent=mined;const total=Object.values(inventory).reduce((a,b)=>a+b,0);$("total").textContent=total;$("totalMobile").textContent=total;
@@ -382,7 +403,7 @@ function resourceRow(t){
  const name=document.createElement("span");name.className="name";name.textContent=language==="en"?(t.nameEn||t.name):t.name;
  const count=document.createElement("b");count.className="count";count.textContent=activeWorld==="life"&&t.group==="building"?(language==="en"?"Max ":"最大 ")+maxBuildable(t.id):String(inventory[t.id]||0);
  row.append(swatch,name,count);
- row.addEventListener("click",()=>{selected=t.id;document.querySelectorAll(".resource").forEach(e=>e.style.outline="");row.style.outline="1px solid #a6b5b2";$("hint").textContent=(language==="en"?"Selected: ":"選択中：")+name.textContent;saveWorld(false);});
+ row.addEventListener("click",()=>{selected=t.id;if(activeWorld==="life"&&t.group==="building")setMode("place");document.querySelectorAll(".resource").forEach(e=>e.style.outline="");row.style.outline="1px solid #a6b5b2";$("hint").textContent=(language==="en"?"Selected: ":"選択中：")+name.textContent;saveWorld(false);});
  return row;
 }
 function renderResources(){
