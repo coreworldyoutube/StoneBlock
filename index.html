@@ -445,9 +445,9 @@ loadInventory();
   if(localX<0||localY<0||localX>=canvasRect.width||localY>=canvasRect.height)return;
   const x=Math.floor((localX+wrap.scrollLeft)/36),y=Math.floor((localY+wrap.scrollTop)/36);
   if(x>=0&&y>=0&&x<W&&y<H){
-   if(activeWorld==="life")interact(x,y);
-   else if(mode==="mine"){if(exposed(x,y))interact(x,y);}
-   else if(isAir(x,y))interact(x,y);
+   // Both worlds use the same click route. interact() alone decides whether
+   // the tile can be mined or placed; placement has no adjacency requirement.
+   interact(x,y);
   }
  });
  window.addEventListener("resize",drawWorld);window.addEventListener("pagehide",()=>saveWorld(false));applyLanguage();drawWorld();
